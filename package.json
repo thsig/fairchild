@@ -1,0 +1,82 @@
+{
+  "_args": [
+    [
+      "fairchild@git+https://github.com/thsig/fairchild.git",
+      "/Users/ths/src/fronkensteen_native"
+    ],
+    [
+      "fairchild@git+https://github.com/thsig/fairchild.git",
+      "/Users/ths/src/rnlib/compression/FairchildSandbox"
+    ]
+  ],
+  "_from": "git+https://github.com/thsig/fairchild.git",
+  "_id": "fairchild@0.0.1",
+  "_inCache": true,
+  "_installable": true,
+  "_location": "/fairchild",
+  "_phantomChildren": {},
+  "_requested": {
+    "hosted": {
+      "directUrl": "https://raw.githubusercontent.com/thsig/fairchild/master/package.json",
+      "gitUrl": "git://github.com/thsig/fairchild.git",
+      "httpsUrl": "git+https://github.com/thsig/fairchild.git",
+      "shortcut": "github:thsig/fairchild",
+      "ssh": "git@github.com:thsig/fairchild.git",
+      "sshUrl": "git+ssh://git@github.com/thsig/fairchild.git",
+      "type": "github"
+    },
+    "name": "fairchild",
+    "raw": "fairchild@git+https://github.com/thsig/fairchild.git",
+    "rawSpec": "git+https://github.com/thsig/fairchild.git",
+    "scope": null,
+    "spec": "git+https://github.com/thsig/fairchild.git",
+    "type": "hosted"
+  },
+  "_requiredBy": [
+    "/"
+  ],
+  "_resolved": "git+https://github.com/thsig/fairchild.git#90015bef5902459f1b20cb33326fb49396b599c7",
+  "_shasum": "4627579e9598ec802a016097fee57985443b928f",
+  "_shrinkwrap": null,
+  "_spec": "fairchild@git+https://github.com/thsig/fairchild.git",
+  "_where": "/Users/ths/src/fronkensteen_native",
+  "author": {
+    "email": "thorarinnsigurdsson@gmail.com",
+    "name": "Thorarinn Sigurdsson",
+    "url": "https://github.com/thsig"
+  },
+  "bugs": {
+    "url": "https://github.com/thsig/Fairchild/issues"
+  },
+  "dependencies": {
+    "bluebird": "^2.9.25"
+  },
+  "description": "Native media compression for react-native",
+  "devDependencies": {
+    "react-native": "*"
+  },
+  "gitHead": "54d480c3c3508d813ab4e9b95e189ce7271e83f0",
+  "homepage": "https://github.com/thsig/Fairchild#readme",
+  "keywords": [
+    "compression",
+    "filesystem",
+    "fs",
+    "ios",
+    "react-component",
+    "react-native",
+    "video"
+  ],
+  "license": "MIT",
+  "main": "Fairchild.js",
+  "name": "fairchild",
+  "optionalDependencies": {},
+  "readme": "Nothing here yet.",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/thsig/Fairchild.git"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "version": "0.0.1"
+}
