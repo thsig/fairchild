@@ -39,14 +39,15 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
   //
   NSURL *inputFileURL;
   if (isAsset) {
-    inputFileURL = [NSURL fileURLWithPath:inputFilePath];
+    inputFileURL = [NSURL URLWithString:inputFilePath];
   } else {
     inputFileURL = [NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:inputFilePath ofType:nil]];
   }
   NSURL *outputFileURL;
 
   NSString *extension = [inputFileURL pathExtension];
-  NSString *fileType = [self videoOutputFileType:extension];
+  /* NSString *fileType = [self videoOutputFileType:extension]; */
+  NSString *fileType = [self videoOutputFileType:@"mp4"];
 
   NSString *guid = [[NSProcessInfo processInfo] globallyUniqueString];
   outputFileURL = [NSURL fileURLWithPath:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject]];
@@ -61,6 +62,7 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
   //
   NSNumber *originalSize = [self fileSize:asset];
   AVAssetTrack *videoTrack = [[asset tracksWithMediaType:AVMediaTypeVideo] firstObject];
+  AVAssetTrack *audioTrack = [[asset tracksWithMediaType:AVMediaTypeAudio] firstObject];
   CGSize originalDimensions = videoTrack.naturalSize;
   int originalWidth  = originalDimensions.width;
   int originalHeight = originalDimensions.height;
@@ -69,12 +71,13 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
 
   int outputWidth; int outputHeight;
   if (cropSquare) {
-    if (rotateDegrees == 90 || rotateDegrees == -90) {
-      outputWidth = originalWidth * outputScale;
-      outputHeight = outputWidth;
-    } else {
+    // width (= height) should be the smaller of the two (and scaled).
+    if (originalHeight < originalWidth) {
       outputHeight = originalHeight * outputScale;
       outputWidth = outputHeight;
+    } else {
+      outputWidth = outputWidth * outputScale;
+      outputHeight = outputWidth;
     }
   } else {
     if (rotateDegrees == 90 || rotateDegrees == -90) {
@@ -100,16 +103,23 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
   videoComposition.frameDuration = CMTimeMake(1, 30);
   videoComposition.renderSize = CGSizeMake(outputWidth, outputHeight);
   AVMutableVideoCompositionInstruction *instruction = [AVMutableVideoCompositionInstruction videoCompositionInstruction];
-  instruction.timeRange = CMTimeRangeMake(kCMTimeZero, CMTimeMakeWithSeconds(CMTimeGetSeconds(asset.duration), 30));
+  float duration = CMTimeGetSeconds(asset.duration);
+  NSLog(@"duration %f", duration);
+  instruction.timeRange = CMTimeRangeMake(kCMTimeZero, CMTimeMakeWithSeconds(duration + 1, 30));
   AVMutableVideoCompositionLayerInstruction *transformer = [AVMutableVideoCompositionLayerInstruction videoCompositionLayerInstructionWithAssetTrack:videoTrack];
 
-  CGAffineTransform t1 = CGAffineTransformMakeScale(outputScale, outputScale);
-  CGAffineTransform t2; CGAffineTransform finalTransform;
+  CGAffineTransform t1; CGAffineTransform t2; CGAffineTransform finalTransform;
+  if (outputScale == 1.0) {
+    t1 = CGAffineTransformIdentity;
+  } else {
+    t1 = CGAffineTransformMakeScale(outputScale, outputScale);
+  }
   if (rotateDegrees) {
+    int translation = originalHeight < originalWidth ? originalHeight : originalWidth;
     if (rotateDegrees == 90) {
-      t2 = CGAffineTransformTranslate(t1, originalHeight, 0);
+      t2 = CGAffineTransformTranslate(t1, translation, 0);
     } else if (rotateDegrees == -90) {
-      t2 = CGAffineTransformTranslate(t1, 0, originalHeight);
+      t2 = CGAffineTransformTranslate(t1, 0, translation);
     }
     finalTransform = CGAffineTransformRotate(t2, rotateDegrees * M_PI / 180.0); // convert degrees to radians
   } else {
@@ -120,7 +130,8 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
   videoComposition.instructions = [NSArray arrayWithObject:instruction];
   
   SDAVAssetExportSession *encoder = [[SDAVAssetExportSession alloc] initWithAsset:asset];
-  encoder.outputFileType = AVFileTypeQuickTimeMovie;
+  encoder.outputFileType = fileType;
+  /* encoder.outputFileType = AVFileTypeQuickTimeMovie; */
   encoder.outputURL = outputFileURL;
   encoder.shouldOptimizeForNetworkUse = YES;
   encoder.videoComposition = videoComposition;
@@ -138,6 +149,14 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
     AVVideoWidthKey:  [NSNumber numberWithInt:outputWidth],
     AVVideoHeightKey: [NSNumber numberWithInt:outputHeight],
     AVVideoCompressionPropertiesKey: compressionSettings
+  };
+
+  encoder.audioSettings = @
+  {
+    AVFormatIDKey: @(kAudioFormatMPEG4AAC),
+    AVNumberOfChannelsKey: @1,
+    AVSampleRateKey: @44100,
+    AVEncoderBitRateKey: @128000,
   };
   
   //
@@ -184,7 +203,7 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
     }
     else if (encoder.status == AVAssetExportSessionStatusCancelled)
     {
-      NSLog(@"Video export cancelled");
+      NSLog(@"Video export cancelled, error: %@", encoder.error);
     }
     else
     {
@@ -246,3 +265,4 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
 }
 
 @end
+

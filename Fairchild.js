@@ -30,12 +30,15 @@ var Fairchild = {
   // rotateDegrees: integer (default: 0)
   compressVideo(inputFilePath, deleteOriginal, outputOptions) {
     if (inputFilePath) {
+      if (inputFilePath.match(/^\//)) {
+        inputFilePath = `file://${inputFilePath}`;
+      }
       var o = outputOptions;
       var ft = o.fileType;
       if (!o.fileType) { ft = extractFileType(inputFilePath); }
       var isAsset = o.isAsset;
       if (isAsset === null || isAsset === undefined) {
-        isAsset = inputFilePath.match(/^(assets-library|file):/);
+        isAsset = !!inputFilePath.match(/^(assets-library|file):/);
       }
       var opts = {
         fileType:      ft,
