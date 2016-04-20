@@ -1,12 +1,10 @@
 {
   "_args": [
     [
-      "fairchild@git+https://github.com/thsig/fairchild.git",
-      "/Users/ths/src/fronkensteen_native"
+      "fairchild@git+https://github.com/thsig/fairchild.git"
     ],
     [
-      "fairchild@git+https://github.com/thsig/fairchild.git",
-      "/Users/ths/src/rnlib/compression/FairchildSandbox"
+      "fairchild@git+https://github.com/thsig/fairchild.git"
     ]
   ],
   "_from": "git+https://github.com/thsig/fairchild.git",

@@ -1,3 +1,5 @@
+#import "RCTConvert.h"
+#import "SDAVAssetExportSession.h"
 #import "Fairchild.h"
 #import "RCTBridge.h"
 #import "RCTEventDispatcher.h"
@@ -19,10 +21,28 @@ RCT_EXPORT_MODULE();
 
 RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
                  deleteOriginal:(BOOL)deleteOriginal
-                        options:(NSDictionary *)options
+                  outputOptions:(NSDictionary *)outputOptions
                        callback:(RCTResponseSenderBlock)callback)
 {
-  NSURL *inputFileURL = [NSURL fileURLWithPath:inputFilePath];
+  //
+  // Read options
+  //
+  bool isAsset    = [RCTConvert BOOL:[outputOptions objectForKey:@"isAsset"]];
+  bool cropSquare = [RCTConvert BOOL:[outputOptions objectForKey:@"cropSquare"]];
+  NSString *outputExtension = [outputOptions objectForKey:@"fileType"];
+  NSString *resolution      = [outputOptions objectForKey:@"resolution"];
+  NSNumber *bitRate         = [outputOptions objectForKey:@"bitRate"];
+  int rotateDegrees         = [[outputOptions objectForKey:@"rotateDegrees"] intValue];
+
+  //
+  // Set up input & output files
+  //
+  NSURL *inputFileURL;
+  if (isAsset) {
+    inputFileURL = [NSURL fileURLWithPath:inputFilePath];
+  } else {
+    inputFileURL = [NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:inputFilePath ofType:nil]];
+  }
   NSURL *outputFileURL;
 
   NSString *extension = [inputFileURL pathExtension];
@@ -36,51 +56,141 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
 
   AVURLAsset *asset = [AVURLAsset URLAssetWithURL:inputFileURL options:nil];
   
-  NSNumber *preset = [options objectForKey:@"quality"];
-  NSString *presetName;
-  if (preset) {
-    presetName = [self videoCompressionPreset:preset];
+  // 
+  // Calculate output dimensions
+  //
+  NSNumber *originalSize = [self fileSize:asset];
+  AVAssetTrack *videoTrack = [[asset tracksWithMediaType:AVMediaTypeVideo] firstObject];
+  CGSize originalDimensions = videoTrack.naturalSize;
+  int originalWidth  = originalDimensions.width;
+  int originalHeight = originalDimensions.height;
+
+  double outputScale = [self outputScaleForResolution:resolution inputPixelCount:(originalWidth * originalHeight)];
+
+  int outputWidth; int outputHeight;
+  if (cropSquare) {
+    if (rotateDegrees == 90 || rotateDegrees == -90) {
+      outputWidth = originalWidth * outputScale;
+      outputHeight = outputWidth;
+    } else {
+      outputHeight = originalHeight * outputScale;
+      outputWidth = outputHeight;
+    }
   } else {
-    presetName = [self videoCompressionPreset:@3];
+    if (rotateDegrees == 90 || rotateDegrees == -90) {
+      outputHeight = originalWidth * outputScale;
+      outputWidth  = originalHeight * outputScale;
+    } else {
+      outputWidth  = originalWidth * outputScale;
+      outputHeight = originalHeight * outputScale;
+    }
   }
 
-  NSNumber *originalSize = [self fileSize:asset];
+  // Make sure width and height are multiples of 16 to avoid green borders.
+  while (outputWidth % 16 > 0)  { outputWidth++; }
+  while (outputHeight % 16 > 0) { outputHeight++; }
 
-  AVAssetExportSession *exportSession = [AVAssetExportSession exportSessionWithAsset:asset
-                                                                          presetName:presetName];
-  exportSession.outputURL = outputFileURL;
-  exportSession.outputFileType = fileType;
+  NSLog(@"original: width %i, height %i", originalWidth, originalHeight);
+  NSLog(@"output: width %i, height %i", outputWidth, outputHeight);
+  
+  //
+  // Video composition operations & compression settings
+  //
+  AVMutableVideoComposition *videoComposition = [AVMutableVideoComposition videoComposition];
+  videoComposition.frameDuration = CMTimeMake(1, 30);
+  videoComposition.renderSize = CGSizeMake(outputWidth, outputHeight);
+  AVMutableVideoCompositionInstruction *instruction = [AVMutableVideoCompositionInstruction videoCompositionInstruction];
+  instruction.timeRange = CMTimeRangeMake(kCMTimeZero, CMTimeMakeWithSeconds(CMTimeGetSeconds(asset.duration), 30));
+  AVMutableVideoCompositionLayerInstruction *transformer = [AVMutableVideoCompositionLayerInstruction videoCompositionLayerInstructionWithAssetTrack:videoTrack];
 
-  [exportSession exportAsynchronouslyWithCompletionHandler:^(void)
-   {
-     AVAsset *compressedAsset = [AVURLAsset URLAssetWithURL:outputFileURL options:nil];
-     NSNumber *compressedSize = [self fileSize:compressedAsset];
+  CGAffineTransform t1 = CGAffineTransformMakeScale(outputScale, outputScale);
+  CGAffineTransform t2; CGAffineTransform finalTransform;
+  if (rotateDegrees) {
+    if (rotateDegrees == 90) {
+      t2 = CGAffineTransformTranslate(t1, originalHeight, 0);
+    } else if (rotateDegrees == -90) {
+      t2 = CGAffineTransformTranslate(t1, 0, originalHeight);
+    }
+    finalTransform = CGAffineTransformRotate(t2, rotateDegrees * M_PI / 180.0); // convert degrees to radians
+  } else {
+    finalTransform = t1;
+  }
+  [transformer setTransform:finalTransform atTime:kCMTimeZero];
+  instruction.layerInstructions = [NSArray arrayWithObject:transformer];
+  videoComposition.instructions = [NSArray arrayWithObject:instruction];
+  
+  SDAVAssetExportSession *encoder = [[SDAVAssetExportSession alloc] initWithAsset:asset];
+  encoder.outputFileType = AVFileTypeQuickTimeMovie;
+  encoder.outputURL = outputFileURL;
+  encoder.shouldOptimizeForNetworkUse = YES;
+  encoder.videoComposition = videoComposition;
 
-     if (exportSession.error) {
-       NSLog(@"Fairchild: exportSession error %@", exportSession.error);
-     }
+  NSDictionary *compressionSettings;
+  if (bitRate) {
+    compressionSettings = @{AVVideoAverageBitRateKey: bitRate};
+  } else {
+    compressionSettings = @{};
+  }
 
-    NSError *deleteError = nil;
-
-     if (deleteOriginal) {
-       [fileManager removeItemAtURL:inputFileURL error:&deleteError];
-       if (deleteError) {
-         NSLog(@"Fairchild: error while deleting original %@", deleteError);
+  encoder.videoSettings = @
+  {
+    AVVideoCodecKey: AVVideoCodecH264,
+    AVVideoWidthKey:  [NSNumber numberWithInt:outputWidth],
+    AVVideoHeightKey: [NSNumber numberWithInt:outputHeight],
+    AVVideoCompressionPropertiesKey: compressionSettings
+  };
+  
+  //
+  // Perform the export
+  //
+  [encoder exportAsynchronouslyWithCompletionHandler:^
+  {
+    if (encoder.status == AVAssetExportSessionStatusCompleted)
+    {
+       AVAsset *compressedAsset = [AVURLAsset URLAssetWithURL:outputFileURL options:nil];
+       NSNumber *compressedSize = [self fileSize:compressedAsset];
+       if (deleteOriginal) {
+         NSError *deleteError = nil;
+         [fileManager removeItemAtURL:inputFileURL error:&deleteError];
+         if (deleteError) {
+           NSLog(@"Fairchild: error while deleting original %@", deleteError);
+         }
        }
-     }
-     NSNumber *compressionRatio;
-     if ([originalSize floatValue] > 0) {
-       compressionRatio = [NSNumber numberWithFloat:(1.0 - ([compressedSize floatValue] / [originalSize floatValue]))];
-     } else {
-       compressionRatio = 0;
-     }
-     return callback(@[[NSNull null], @{
+       NSNumber *compressionRatio;
+       if ([originalSize floatValue] > 0) {
+         compressionRatio = [NSNumber numberWithFloat:(1.0 - ([compressedSize floatValue] / [originalSize floatValue]))];
+       } else {
+         compressionRatio = @(0);
+       }
+      
+      AVAssetTrack *firstCompressedVideoTrack = [[compressedAsset tracksWithMediaType:AVMediaTypeVideo] firstObject];
+      CGSize originalDimensions = firstCompressedVideoTrack.naturalSize;
+      int compressedWidth  = originalDimensions.width;
+      int compressedHeight = originalDimensions.height;
+      
+      NSLog(@"----------------------");
+      NSLog(@"compression complete");
+      NSLog(@"compression ratio %@", compressionRatio);
+      NSLog(@"original size %@", originalSize);
+      NSLog(@"compressed size %@", compressedSize);
+      NSLog(@"compressed dimensions: width %i, height %i", compressedWidth, compressedHeight);
+      NSLog(@"----------------------");
+      return callback(@[[NSNull null], @{
          @"outputFileURI":       [outputFileURL path],
          @"inputFileSizeBytes":  originalSize,
          @"outputFileSizeBytes": compressedSize,
          @"compressionRatio" :   compressionRatio
        }]);
-   }]; 
+    }
+    else if (encoder.status == AVAssetExportSessionStatusCancelled)
+    {
+      NSLog(@"Video export cancelled");
+    }
+    else
+    {
+      NSLog(@"Video export failed with error: %@ (%d)", encoder.error.localizedDescription, encoder.error.code);
+    }
+  }];
 }
 
 - (NSString *)videoCompressionPreset:(NSNumber *)quality
@@ -102,6 +212,16 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
     @"mov":  AVFileTypeQuickTimeMovie
   };
   return [fileTypes objectForKey:extension];
+}
+
+- (double)outputScaleForResolution:(NSString *)resolution inputPixelCount:(int)inputPixelCount
+{
+  NSDictionary *pixelCounts = @{
+    @"480p":  @(640.0 * 480.0),
+    @"720p":  @(1080.0 * 720.0),
+    @"1080p": @(1920.0 * 1080.0)
+  };
+  return [[pixelCounts objectForKey:resolution] doubleValue] / inputPixelCount;
 }
 
 - (NSNumber *)fileSize:(AVAsset *)asset
