@@ -8,12 +8,15 @@
 
 /* Begin PBXBuildFile section */
 		BB0B7BCF1C7208A600295F44 /* Fairchild.m in Sources */ = {isa = PBXBuildFile; fileRef = BB0B7BCD1C7208A600295F44 /* Fairchild.m */; };
+		BB0BA6AA1CBDB4E9009D234F /* SDAVAssetExportSession.m in Sources */ = {isa = PBXBuildFile; fileRef = BB0BA6A81CBDB4E9009D234F /* SDAVAssetExportSession.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		BB0B7B9E1C71143100295F44 /* libFairchild.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libFairchild.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB0B7BCC1C7208A600295F44 /* Fairchild.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Fairchild.h; sourceTree = "<group>"; };
 		BB0B7BCD1C7208A600295F44 /* Fairchild.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Fairchild.m; sourceTree = "<group>"; };
+		BB0BA6A71CBDB4E9009D234F /* SDAVAssetExportSession.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SDAVAssetExportSession.h; path = SDAVAssetExportSession/SDAVAssetExportSession.h; sourceTree = "<group>"; };
+		BB0BA6A81CBDB4E9009D234F /* SDAVAssetExportSession.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SDAVAssetExportSession.m; path = SDAVAssetExportSession/SDAVAssetExportSession.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -30,6 +33,8 @@
 		BB0B7B8D1C7111CC00295F44 = {
 			isa = PBXGroup;
 			children = (
+				BB0BA6A71CBDB4E9009D234F /* SDAVAssetExportSession.h */,
+				BB0BA6A81CBDB4E9009D234F /* SDAVAssetExportSession.m */,
 				BB0B7BCC1C7208A600295F44 /* Fairchild.h */,
 				BB0B7BCD1C7208A600295F44 /* Fairchild.m */,
 				BB0B7B9F1C71143100295F44 /* Products */,
@@ -111,6 +116,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BB0B7BCF1C7208A600295F44 /* Fairchild.m in Sources */,
+				BB0BA6AA1CBDB4E9009D234F /* SDAVAssetExportSession.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
