@@ -20,19 +20,21 @@ RCT_EXPORT_MODULE();
 }
 
 RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
-                 deleteOriginal:(BOOL)deleteOriginal
                   outputOptions:(NSDictionary *)outputOptions
                        callback:(RCTResponseSenderBlock)callback)
 {
   //
   // Read options
   //
-  bool isAsset    = [RCTConvert BOOL:[outputOptions objectForKey:@"isAsset"]];
-  bool cropSquare = [RCTConvert BOOL:[outputOptions objectForKey:@"cropSquare"]];
+  bool keepOriginal = [RCTConvert BOOL:[outputOptions objectForKey:@"keepOriginal"]];
+  bool isAsset      = [RCTConvert BOOL:[outputOptions objectForKey:@"isAsset"]];
+  bool cropSquare   = [RCTConvert BOOL:[outputOptions objectForKey:@"cropSquare"]];
   NSString *outputExtension = [outputOptions objectForKey:@"fileType"];
   NSString *resolution      = [outputOptions objectForKey:@"resolution"];
   NSNumber *bitRate         = [outputOptions objectForKey:@"bitRate"];
   int rotateDegrees         = [[outputOptions objectForKey:@"rotateDegrees"] intValue];
+
+  bool skipCompression = !resolution && !bitRate;
 
   //
   // Set up input & output files
@@ -64,68 +66,56 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
   AVAssetTrack *videoTrack = [[asset tracksWithMediaType:AVMediaTypeVideo] firstObject];
   AVAssetTrack *audioTrack = [[asset tracksWithMediaType:AVMediaTypeAudio] firstObject];
   CGSize originalDimensions = videoTrack.naturalSize;
-  int originalWidth  = originalDimensions.width;
-  int originalHeight = originalDimensions.height;
-
-  double outputScale = [self outputScaleForResolution:resolution inputPixelCount:(originalWidth * originalHeight)];
-
-  int outputWidth; int outputHeight;
-  if (cropSquare) {
-    // width (= height) should be the smaller of the two (and scaled).
-    if (originalHeight < originalWidth) {
-      outputHeight = originalHeight * outputScale;
-      outputWidth = outputHeight;
-    } else {
-      outputWidth = outputWidth * outputScale;
-      outputHeight = outputWidth;
-    }
+  CGSize outputDimensions;
+  double outputScale;
+  
+  if (resolution) {
+    outputScale = [self outputScaleForResolution:resolution
+                                 inputPixelCount:(originalDimensions.width * originalDimensions.height)];
   } else {
-    if (rotateDegrees == 90 || rotateDegrees == -90) {
-      outputHeight = originalWidth * outputScale;
-      outputWidth  = originalHeight * outputScale;
-    } else {
-      outputWidth  = originalWidth * outputScale;
-      outputHeight = originalHeight * outputScale;
-    }
+    outputScale = 1.0;
   }
-
-  // Make sure width and height are multiples of 16 to avoid green borders.
-  while (outputWidth % 16 > 0)  { outputWidth++; }
-  while (outputHeight % 16 > 0) { outputHeight++; }
-
-  NSLog(@"original: width %i, height %i", originalWidth, originalHeight);
-  NSLog(@"output: width %i, height %i", outputWidth, outputHeight);
+  outputDimensions = [self outputDimensions:originalDimensions
+                                outputScale:outputScale rotateDegrees:rotateDegrees
+                                 cropSquare:cropSquare];
+  
+  NSLog(@"original dimensions: width %f, height %f", originalDimensions.width, originalDimensions.height);
+  NSLog(@"output dimensions: width %f, height %f", outputDimensions.width, outputDimensions.height);
   
   //
   // Video composition operations & compression settings
   //
   AVMutableVideoComposition *videoComposition = [AVMutableVideoComposition videoComposition];
   videoComposition.frameDuration = CMTimeMake(1, 30);
-  videoComposition.renderSize = CGSizeMake(outputWidth, outputHeight);
+  videoComposition.renderSize = CGSizeMake(outputDimensions.width, outputDimensions.height);
   AVMutableVideoCompositionInstruction *instruction = [AVMutableVideoCompositionInstruction videoCompositionInstruction];
   float duration = CMTimeGetSeconds(asset.duration);
   NSLog(@"duration %f", duration);
   instruction.timeRange = CMTimeRangeMake(kCMTimeZero, CMTimeMakeWithSeconds(duration + 1, 30));
   AVMutableVideoCompositionLayerInstruction *transformer = [AVMutableVideoCompositionLayerInstruction videoCompositionLayerInstructionWithAssetTrack:videoTrack];
 
-  CGAffineTransform t1; CGAffineTransform t2; CGAffineTransform finalTransform;
+  // Configure transforms
+
+  NSMutableArray *transforms = [[NSMutableArray alloc] init];
   if (outputScale == 1.0) {
-    t1 = CGAffineTransformIdentity;
+    [self addTransform:transforms new:CGAffineTransformIdentity];
   } else {
-    t1 = CGAffineTransformMakeScale(outputScale, outputScale);
+    [self addTransform:transforms new:CGAffineTransformMakeScale(outputScale, outputScale)];
   }
   if (rotateDegrees) {
-    int translation = originalHeight < originalWidth ? originalHeight : originalWidth;
+    int translation = originalDimensions.height < originalDimensions.width ? originalDimensions.height : originalDimensions.width;
     if (rotateDegrees == 90) {
-      t2 = CGAffineTransformTranslate(t1, translation, 0);
+      [self addTransform:transforms new:CGAffineTransformMakeTranslation(translation, 0)];
     } else if (rotateDegrees == -90) {
-      t2 = CGAffineTransformTranslate(t1, 0, translation);
+      [self addTransform:transforms new:CGAffineTransformMakeTranslation(0, translation)];
     }
-    finalTransform = CGAffineTransformRotate(t2, rotateDegrees * M_PI / 180.0); // convert degrees to radians
-  } else {
-    finalTransform = t1;
+    [self addTransform:transforms new:CGAffineTransformMakeRotation(rotateDegrees * M_PI / 180.0)]; // convert degrees to radians
   }
+  CGAffineTransform finalTransform = [self combineTransforms:transforms];
   [transformer setTransform:finalTransform atTime:kCMTimeZero];
+
+  // END
+
   instruction.layerInstructions = [NSArray arrayWithObject:transformer];
   videoComposition.instructions = [NSArray arrayWithObject:instruction];
   
@@ -146,8 +136,8 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
   encoder.videoSettings = @
   {
     AVVideoCodecKey: AVVideoCodecH264,
-    AVVideoWidthKey:  [NSNumber numberWithInt:outputWidth],
-    AVVideoHeightKey: [NSNumber numberWithInt:outputHeight],
+    AVVideoWidthKey:  [NSNumber numberWithInt:outputDimensions.width],
+    AVVideoHeightKey: [NSNumber numberWithInt:outputDimensions.height],
     AVVideoCompressionPropertiesKey: compressionSettings
   };
 
@@ -159,6 +149,7 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
     AVEncoderBitRateKey: @128000,
   };
   
+  NSDate *exportStart = [NSDate date];
   //
   // Perform the export
   //
@@ -166,9 +157,10 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
   {
     if (encoder.status == AVAssetExportSessionStatusCompleted)
     {
+      NSDate *exportEnd = [NSDate date];
        AVAsset *compressedAsset = [AVURLAsset URLAssetWithURL:outputFileURL options:nil];
        NSNumber *compressedSize = [self fileSize:compressedAsset];
-       if (deleteOriginal) {
+       if (!keepOriginal) {
          NSError *deleteError = nil;
          [fileManager removeItemAtURL:inputFileURL error:&deleteError];
          if (deleteError) {
@@ -189,6 +181,7 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
       
       NSLog(@"----------------------");
       NSLog(@"compression complete");
+      NSLog(@"execution time %f seconds", [exportEnd timeIntervalSinceDate:exportStart]);
       NSLog(@"compression ratio %@", compressionRatio);
       NSLog(@"original size %@", originalSize);
       NSLog(@"compressed size %@", compressedSize);
@@ -241,6 +234,63 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
     @"1080p": @(1920.0 * 1080.0)
   };
   return [[pixelCounts objectForKey:resolution] doubleValue] / inputPixelCount;
+}
+
+- (CGSize)outputDimensions:(CGSize)originalDimensions
+                       outputScale:(double)outputScale
+                     rotateDegrees:(int)rotateDegrees
+                        cropSquare:(bool)cropSquare
+{
+  int originalWidth  = originalDimensions.width;
+  int originalHeight = originalDimensions.height;
+  int outputWidth; int outputHeight;
+  if (cropSquare) {
+    // width (= height) should be the smaller of the two (and scaled).
+    if (originalHeight < originalWidth) {
+      outputHeight = originalHeight * outputScale;
+      outputWidth = outputHeight;
+    } else {
+      outputWidth = outputWidth * outputScale;
+      outputHeight = outputWidth;
+    }
+  } else {
+    if (rotateDegrees == 90 || rotateDegrees == -90) {
+      outputHeight = originalWidth * outputScale;
+      outputWidth  = originalHeight * outputScale;
+    } else {
+      outputWidth  = originalWidth * outputScale;
+      outputHeight = originalHeight * outputScale;
+    }
+  }
+
+  // Make sure width and height are multiples of 16 to avoid green borders.
+  while (outputWidth % 16 > 0)  { outputWidth++; }
+  while (outputHeight % 16 > 0) { outputHeight++; }
+
+  return CGSizeMake(outputWidth, outputHeight);
+}
+
+// Need to wrap the CGAffineTransform-s in NSValue-s, since NSArray only accepts objects.
+- (NSMutableArray *)addTransform:(NSMutableArray *)transforms new:(CGAffineTransform)newTransform
+{
+  [transforms addObject:[NSValue valueWithBytes:&newTransform objCType:@encode(CGAffineTransform)]];
+  return transforms;
+}
+
+- (CGAffineTransform)combineTransforms:(NSMutableArray *)transforms
+{
+  int count = [transforms count];
+  CGAffineTransform t;
+  [[transforms objectAtIndex:(count-1)] getValue:&t];
+  if (count == 1) {
+    return t;
+  }
+  CGAffineTransform t_next;
+  for (int i = count-2; i >= 0; i--) {
+    [[transforms objectAtIndex:i] getValue:&t_next];
+    t = CGAffineTransformConcat(t, t_next);
+  }
+  return t;
 }
 
 - (NSNumber *)fileSize:(AVAsset *)asset

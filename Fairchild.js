@@ -22,13 +22,14 @@ var compressionError = (err) => {
 var Fairchild = {
 
   // Supported outputOtions:
+  // keepOriginal:  boolean (default: false)
   // fileType:      'mov' | 'mp4' (default: same as source)
   // isAsset:       boolean (default: inferred from path prefix)
   // resolution:    '1080p' | '720p' (default) | '480p'
   // cropSquare:    boolean (default: false)
   // bitRate:       integer (default: same as source)
   // rotateDegrees: integer (default: 0)
-  compressVideo(inputFilePath, deleteOriginal, outputOptions) {
+  compressVideo(inputFilePath, outputOptions) {
     if (inputFilePath) {
       if (inputFilePath.match(/^\//)) {
         inputFilePath = `file://${inputFilePath}`;
@@ -42,13 +43,14 @@ var Fairchild = {
       }
       var opts = {
         fileType:      ft,
+        keepOriginal:  o.keepOriginal || false,
         isAsset:       isAsset || false,
-        resolution:    o.resolution || '720p',
+        resolution:    o.resolution,
         cropSquare:    o.cropSquare || false,
         bitRate:       o.bitRate,
         rotateDegrees: o.rotateDegrees || 0,
       };
-      return _compressVideo(inputFilePath, !!deleteOriginal, opts)
+      return _compressVideo(inputFilePath, opts)
         .catch(compressionError);
     } else {
       console.error('Error: Fairchild.compressVideo called with blank inputFilePath.');
