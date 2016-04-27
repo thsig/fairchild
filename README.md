@@ -33,7 +33,7 @@ var compressionOptions = {
 };
 
 this.refs.camera.capture()
-  .then((uri) => Fairchild.compressVideo(uri, compressionOptions).outputFileURI; })
+  .then((uri) => Fairchild.compressVideo(uri, compressionOptions).outputFileURI)
   .then(((compressedUri) => this.persistVideo(compressedUri))); // e.g. upload file to server
 ```
 
