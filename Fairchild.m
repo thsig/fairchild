@@ -29,10 +29,11 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
   bool keepOriginal = [RCTConvert BOOL:[outputOptions objectForKey:@"keepOriginal"]];
   bool isAsset      = [RCTConvert BOOL:[outputOptions objectForKey:@"isAsset"]];
   bool cropSquare   = [RCTConvert BOOL:[outputOptions objectForKey:@"cropSquare"]];
-  NSString *outputExtension = [outputOptions objectForKey:@"fileType"];
-  NSString *resolution      = [outputOptions objectForKey:@"resolution"];
-  NSNumber *bitRate         = [outputOptions objectForKey:@"bitRate"];
-  int rotateDegrees         = [[outputOptions objectForKey:@"rotateDegrees"] intValue];
+  NSString *outputExtension          = [outputOptions objectForKey:@"fileType"];
+  NSString *resolution               = [outputOptions objectForKey:@"resolution"];
+  NSNumber *bitRate                  = [outputOptions objectForKey:@"bitRate"];
+  NSNumber *cropSquareVerticalOffset = [outputOptions objectForKey:@"cropSquareVerticalOffset"];
+  int rotateDegrees                  = [[outputOptions objectForKey:@"rotateDegrees"] intValue];
 
   bool skipCompression = !resolution && !bitRate;
 
@@ -48,7 +49,6 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
   NSURL *outputFileURL;
 
   NSString *extension = [inputFileURL pathExtension];
-  /* NSString *fileType = [self videoOutputFileType:extension]; */
   NSString *fileType = [self videoOutputFileType:@"mp4"];
 
   NSString *guid = [[NSProcessInfo processInfo] globallyUniqueString];
@@ -78,6 +78,14 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
   outputDimensions = [self outputDimensions:originalDimensions
                                 outputScale:outputScale rotateDegrees:rotateDegrees
                                  cropSquare:cropSquare];
+  int cropOffsetPixels;
+  if (cropSquare) {
+    cropOffsetPixels = [self cropOffsetPixels:originalDimensions
+                     cropSquareVerticalOffset:cropSquareVerticalOffset
+                                rotateDegrees:rotateDegrees];
+  } else {
+    cropOffsetPixels = 0;
+  }
   
   NSLog(@"original dimensions: width %f, height %f", originalDimensions.width, originalDimensions.height);
   NSLog(@"output dimensions: width %f, height %f", outputDimensions.width, outputDimensions.height);
@@ -95,6 +103,7 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
   AVMutableVideoCompositionLayerInstruction *transformer = [AVMutableVideoCompositionLayerInstruction videoCompositionLayerInstructionWithAssetTrack:videoTrack];
 
   // Configure transforms
+  // Note: combineTransforms combines the transforms in reverse/right-associative order
 
   NSMutableArray *transforms = [[NSMutableArray alloc] init];
   if (outputScale == 1.0) {
@@ -103,13 +112,25 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
     [self addTransform:transforms new:CGAffineTransformMakeScale(outputScale, outputScale)];
   }
   if (rotateDegrees) {
-    int translation = originalDimensions.height < originalDimensions.width ? originalDimensions.height : originalDimensions.width;
-    if (rotateDegrees == 90) {
-      [self addTransform:transforms new:CGAffineTransformMakeTranslation(translation, 0)];
-    } else if (rotateDegrees == -90) {
-      [self addTransform:transforms new:CGAffineTransformMakeTranslation(0, translation)];
+    // Convert degrees to radians
+    CGAffineTransform rotationTransform = CGAffineTransformMakeRotation(rotateDegrees *  M_PI / 180.0);
+    int shorterDimensionLength; int longerDimensionLength;
+    if (originalDimensions.height < originalDimensions.width) {
+      shorterDimensionLength = originalDimensions.height;
+      longerDimensionLength  = originalDimensions.width;
+    } else {
+      shorterDimensionLength = originalDimensions.width;
+      longerDimensionLength  = originalDimensions.height;
     }
-    [self addTransform:transforms new:CGAffineTransformMakeRotation(rotateDegrees * M_PI / 180.0)]; // convert degrees to radians
+    if (rotateDegrees == 90) {
+      [self addTransform:transforms new:CGAffineTransformMakeTranslation(shorterDimensionLength, -cropOffsetPixels)];
+      [self addTransform:transforms new:rotationTransform];
+    } else if (rotateDegrees == -90) {
+      [self addTransform:transforms new:rotationTransform];
+      [self addTransform:transforms new:CGAffineTransformMakeTranslation(-longerDimensionLength + cropOffsetPixels, 0)];
+    }
+  } else {
+    [self addTransform:transforms new:CGAffineTransformMakeTranslation(-cropOffsetPixels, 0)];
   }
   CGAffineTransform finalTransform = [self combineTransforms:transforms];
   [transformer setTransform:finalTransform atTime:kCMTimeZero];
@@ -121,7 +142,6 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
   
   SDAVAssetExportSession *encoder = [[SDAVAssetExportSession alloc] initWithAsset:asset];
   encoder.outputFileType = fileType;
-  /* encoder.outputFileType = AVFileTypeQuickTimeMovie; */
   encoder.outputURL = outputFileURL;
   encoder.shouldOptimizeForNetworkUse = YES;
   encoder.videoComposition = videoComposition;
@@ -268,6 +288,26 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
   while (outputHeight % 16 > 0) { outputHeight++; }
 
   return CGSizeMake(outputWidth, outputHeight);
+}
+
+- (int)cropOffsetPixels:(CGSize)originalDimensions
+cropSquareVerticalOffset:(NSNumber *)cropSquareVerticalOffset
+           rotateDegrees:(int)rotateDegrees
+{
+  if (rotateDegrees == 90 || rotateDegrees == -90) {
+    if (originalDimensions.width < originalDimensions.height) {
+      // We only want to crop along the longer dimension, so this case becomes a no-op.
+      return 0;
+    } else {
+      return [cropSquareVerticalOffset floatValue] * originalDimensions.width;
+    }
+  } else {
+    if (originalDimensions.width > originalDimensions.height) {
+      return 0;
+    } else {
+      return [cropSquareVerticalOffset floatValue] * originalDimensions.height;
+    }
+  }
 }
 
 // Need to wrap the CGAffineTransform-s in NSValue-s, since NSArray only accepts objects.

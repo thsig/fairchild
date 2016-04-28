@@ -27,6 +27,7 @@ var Fairchild = {
   // isAsset:       boolean (default: inferred from path prefix)
   // resolution:    '1080p' | '720p' (default) | '480p'
   // cropSquare:    boolean (default: false)
+  // cropSquareVerticalOffset : number from 0.0 to 1.0 (default: 0.0)
   // bitRate:       integer (default: same as source)
   // rotateDegrees: integer (default: 0)
   compressVideo(inputFilePath, outputOptions) {
@@ -41,12 +42,18 @@ var Fairchild = {
       if (isAsset === null || isAsset === undefined) {
         isAsset = !!inputFilePath.match(/^(assets-library|file):/);
       }
+      var vo = o.cropSquareVerticalOffset || 0;
+      if (vo) {
+        if (vo > 1.0) { vo = 1.0; }
+        if (vo < 0.0) { vo = 0.0; }
+      }
       var opts = {
         fileType:      ft,
         keepOriginal:  o.keepOriginal || false,
         isAsset:       isAsset || false,
         resolution:    o.resolution,
         cropSquare:    o.cropSquare || false,
+        cropSquareVerticalOffset: vo,
         bitRate:       o.bitRate,
         rotateDegrees: o.rotateDegrees || 0,
       };
