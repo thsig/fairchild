@@ -74,7 +74,7 @@ The other case is when `cropSquare` is set to `true`. In that case, the ratio be
 where `w = min(input height, input width)`.
 ##### `cropSquare - true | false (default)`
 When true, the output file is cropped to a square aspect ratio such that its width and height are equal to `min(height, width)`, starting the crop from the top left corner of the original file.
-##### `cropSquareVerticalOffset - number from 0.0 to 1.0 (default: 0.0)
+##### `cropSquareVerticalOffset - number from 0.0 to 1.0 (default: 0.0)`
 When `cropSquare = true`, sets the vertical offset of the top-left corner of the crop square to `cropSquareVerticalOffset * height`. Useful for cropping when the visible area of the camera in the UI is partially obscured by an overlay, to ensure that the output video is cropped in a way consistent with what the user saw during recording.
 ##### `bitRate - integer`
 Default: Same as source file. Indicates the average bitrate to be used for the output file.
