@@ -34,6 +34,8 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
   NSNumber *bitRate                  = [outputOptions objectForKey:@"bitRate"];
   NSNumber *cropSquareVerticalOffset = [outputOptions objectForKey:@"cropSquareVerticalOffset"];
   int rotateDegrees                  = [[outputOptions objectForKey:@"rotateDegrees"] intValue];
+  
+  if (!outputExtension) { outputExtension = @"mov"; }
 
   bool skipCompression = !resolution && !bitRate;
 
@@ -49,11 +51,11 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
   NSURL *outputFileURL;
 
   NSString *extension = [inputFileURL pathExtension];
-  NSString *fileType = [self videoOutputFileType:@"mp4"];
+  NSString *fileType = [self videoOutputFileType:outputExtension];
 
   NSString *guid = [[NSProcessInfo processInfo] globallyUniqueString];
   outputFileURL = [NSURL fileURLWithPath:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject]];
-  outputFileURL = [outputFileURL URLByAppendingPathComponent:[@[guid, extension] componentsJoinedByString:@"."]];
+  outputFileURL = [outputFileURL URLByAppendingPathComponent:[@[guid, outputExtension] componentsJoinedByString:@"."]];
 
   NSFileManager *fileManager = [NSFileManager defaultManager];
 
