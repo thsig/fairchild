@@ -150,7 +150,11 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
 
   NSDictionary *compressionSettings;
   if (bitRate) {
-    compressionSettings = @{AVVideoAverageBitRateKey: bitRate};
+    if ([videoTrack estimatedDataRate] <= [bitRate floatValue]) {
+      compressionSettings = @{};
+    } else {
+      compressionSettings = @{AVVideoAverageBitRateKey: bitRate};
+    }
   } else {
     compressionSettings = @{};
   }
@@ -185,6 +189,7 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
        if (!keepOriginal) {
          NSError *deleteError = nil;
          [fileManager removeItemAtURL:inputFileURL error:&deleteError];
+         NSLog(@"Fairchild: deleted original file at %@", inputFileURL);
          if (deleteError) {
            NSLog(@"Fairchild: error while deleting original %@", deleteError);
          }
@@ -255,7 +260,12 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
     @"720p":  @(1080.0 * 720.0),
     @"1080p": @(1920.0 * 1080.0)
   };
-  return [[pixelCounts objectForKey:resolution] doubleValue] / inputPixelCount;
+  double outputPixelCount = [[pixelCounts objectForKey:resolution] doubleValue];
+  if (outputPixelCount >= inputPixelCount) {
+    return 1.0;
+  } else {
+    return outputPixelCount / inputPixelCount;
+  }
 }
 
 - (CGSize)outputDimensions:(CGSize)originalDimensions
@@ -275,6 +285,10 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
       outputWidth = outputWidth * outputScale;
       outputHeight = outputWidth;
     }
+    // Make sure width and height are multiples of 16 to avoid green borders.
+    while (outputWidth % 16 > 0)  { outputWidth++; }
+    while (outputHeight % 16 > 0) { outputHeight++; }
+
   } else {
     if (rotateDegrees == 90 || rotateDegrees == -90) {
       outputHeight = originalWidth * outputScale;
@@ -284,10 +298,6 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
       outputHeight = originalHeight * outputScale;
     }
   }
-
-  // Make sure width and height are multiples of 16 to avoid green borders.
-  while (outputWidth % 16 > 0)  { outputWidth++; }
-  while (outputHeight % 16 > 0) { outputHeight++; }
 
   return CGSizeMake(outputWidth, outputHeight);
 }
