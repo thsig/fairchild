@@ -1,9 +1,11 @@
 #import "RCTConvert.h"
-#import "SDAVAssetExportSession.h"
 #import "Fairchild.h"
+#import "SDAVAssetExportSession.h"
 #import "RCTBridge.h"
 #import "RCTEventDispatcher.h"
 #import <AVFoundation/AVFoundation.h>
+@import MobileCoreServices;
+@import ImageIO;
 
 /* #import <Photos/PHAsset.h> // for testing */
 
@@ -18,6 +20,10 @@ RCT_EXPORT_MODULE();
 {
   return dispatch_queue_create("rn.fairchild", DISPATCH_QUEUE_SERIAL);
 }
+
+/* ----------------- */
+/* Video Compression */
+/* ----------------- */
 
 RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
                   outputOptions:(NSDictionary *)outputOptions
@@ -184,22 +190,22 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
     if (encoder.status == AVAssetExportSessionStatusCompleted)
     {
       NSDate *exportEnd = [NSDate date];
-       AVAsset *compressedAsset = [AVURLAsset URLAssetWithURL:outputFileURL options:nil];
-       NSNumber *compressedSize = [self fileSize:compressedAsset];
-       if (!keepOriginal) {
-         NSError *deleteError = nil;
-         [fileManager removeItemAtURL:inputFileURL error:&deleteError];
-         NSLog(@"Fairchild: deleted original file at %@", inputFileURL);
-         if (deleteError) {
-           NSLog(@"Fairchild: error while deleting original %@", deleteError);
-         }
-       }
-       NSNumber *compressionRatio;
-       if ([originalSize floatValue] > 0) {
-         compressionRatio = [NSNumber numberWithFloat:(1.0 - ([compressedSize floatValue] / [originalSize floatValue]))];
-       } else {
-         compressionRatio = @(0);
-       }
+      AVAsset *compressedAsset = [AVURLAsset URLAssetWithURL:outputFileURL options:nil];
+      NSNumber *compressedSize = [self fileSize:compressedAsset];
+      if (!keepOriginal) {
+        NSError *deleteError = nil;
+        [fileManager removeItemAtURL:inputFileURL error:&deleteError];
+        NSLog(@"Fairchild: deleted original file at %@", inputFileURL);
+        if (deleteError) {
+          NSLog(@"Fairchild: error while deleting original %@", deleteError);
+        }
+      }
+      NSNumber *compressionRatio;
+      if ([originalSize floatValue] > 0) {
+        compressionRatio = [NSNumber numberWithFloat:(1.0 - ([compressedSize floatValue] / [originalSize floatValue]))];
+      } else {
+        compressionRatio = @(0);
+      }
       
       AVAssetTrack *firstCompressedVideoTrack = [[compressedAsset tracksWithMediaType:AVMediaTypeVideo] firstObject];
       CGSize originalDimensions = firstCompressedVideoTrack.naturalSize;
@@ -355,6 +361,67 @@ cropSquareVerticalOffset:(NSNumber *)cropSquareVerticalOffset
           estimatedBytes += seconds * rate;
   }
   return [NSNumber numberWithFloat:estimatedBytes];
+}
+
+/* ----------------- */
+/* Thumb Extraction  */
+/* ----------------- */
+
+RCT_EXPORT_METHOD(thumbForVideo:(NSString *)inputFilePath
+                 outputOptions:(NSDictionary *)outputOptions
+                      callback:(RCTResponseSenderBlock)callback)
+{
+  bool isAsset = [RCTConvert BOOL:[outputOptions objectForKey:@"isAsset"]];
+  int width = [[outputOptions objectForKey:@"width"] intValue];
+  Float64 thumbTimeRatio = [[outputOptions objectForKey:@"thumbTimeRatio"] floatValue];
+  
+  NSURL *inputFileURL;
+  if (isAsset) {
+    inputFileURL = [NSURL URLWithString:inputFilePath];
+  } else {
+    inputFileURL = [NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:inputFilePath ofType:nil]];
+  }
+  NSURL *outputFileURL;
+  NSFileManager *fileManager = [NSFileManager defaultManager];
+  NSString *guid = [[NSProcessInfo processInfo] globallyUniqueString];
+  outputFileURL = [NSURL fileURLWithPath:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject]];
+  outputFileURL = [outputFileURL URLByAppendingPathComponent:[@[guid, @"png"] componentsJoinedByString:@"."]];
+  
+  AVURLAsset *asset = [AVURLAsset URLAssetWithURL:inputFileURL options:nil];
+  
+  if (!width) {
+    // Then we default to a square crop from the top-left of the first video track,
+    // according to its naturalSize.
+    CGSize originalDimensions = [[asset tracksWithMediaType:AVMediaTypeVideo] firstObject].naturalSize;
+    width = MIN(originalDimensions.height, originalDimensions.width);
+  }
+  
+  NSValue *thumbTime = [NSValue valueWithCMTime:CMTimeMultiplyByFloat64([asset duration], thumbTimeRatio)];
+  
+  AVAssetImageGenerator *imageGenerator = [AVAssetImageGenerator assetImageGeneratorWithAsset:asset];
+  imageGenerator.maximumSize = CGSizeMake(width, width);
+  
+  NSDate *exportStart = [NSDate date];
+  
+  [imageGenerator generateCGImagesAsynchronouslyForTimes:@[thumbTime]
+                                       completionHandler:^(CMTime requestedTime,
+                                                           CGImageRef thumb,
+                                                           CMTime actualTime,
+                                                           AVAssetImageGeneratorResult result,
+                                                           NSError * error) {
+    NSDate *exportEnd = [NSDate date];
+    NSNumber *thumbSize;
+    CFURLRef cfurl = (__bridge CFURLRef)outputFileURL;
+    CGImageDestinationRef destination = CGImageDestinationCreateWithURL(cfurl, kUTTypePNG, 1, NULL);
+    CGImageDestinationAddImage(destination, thumb, nil);
+    CGImageDestinationFinalize(destination);
+                                      
+    return callback(@[[NSNull null], @{
+      @"uri":               [outputFileURL path],
+      @"width":             [NSNumber numberWithInt:width],
+      @"actualTimeSeconds": [NSNumber numberWithFloat:CMTimeGetSeconds(actualTime)]
+    }]);
+  }];
 }
 
 - (NSDictionary *)constantsToExport

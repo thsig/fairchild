@@ -7,16 +7,18 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		BB0B7BCF1C7208A600295F44 /* Fairchild.m in Sources */ = {isa = PBXBuildFile; fileRef = BB0B7BCD1C7208A600295F44 /* Fairchild.m */; };
-		BB0BA6AA1CBDB4E9009D234F /* SDAVAssetExportSession.m in Sources */ = {isa = PBXBuildFile; fileRef = BB0BA6A81CBDB4E9009D234F /* SDAVAssetExportSession.m */; };
+		BBEB12E11DC651EA00576B22 /* SDAVAssetExportSession.m in Sources */ = {isa = PBXBuildFile; fileRef = BB0BA6A81CBDB4E9009D234F /* SDAVAssetExportSession.m */; };
+		BBEB12E21DC651EF00576B22 /* Fairchild.m in Sources */ = {isa = PBXBuildFile; fileRef = BB0B7BCD1C7208A600295F44 /* Fairchild.m */; };
+		BBEB12E31DC6523D00576B22 /* Fairchild.h in Headers */ = {isa = PBXBuildFile; fileRef = BBEB12DD1DC6513C00576B22 /* Fairchild.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		BBEB12E41DC6524100576B22 /* SDAVAssetExportSession.h in Headers */ = {isa = PBXBuildFile; fileRef = BBEB12DF1DC6514700576B22 /* SDAVAssetExportSession.h */; settings = {ATTRIBUTES = (Public, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		BB0B7B9E1C71143100295F44 /* libFairchild.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libFairchild.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		BB0B7BCC1C7208A600295F44 /* Fairchild.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Fairchild.h; sourceTree = "<group>"; };
 		BB0B7BCD1C7208A600295F44 /* Fairchild.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Fairchild.m; sourceTree = "<group>"; };
-		BB0BA6A71CBDB4E9009D234F /* SDAVAssetExportSession.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SDAVAssetExportSession.h; path = SDAVAssetExportSession/SDAVAssetExportSession.h; sourceTree = "<group>"; };
 		BB0BA6A81CBDB4E9009D234F /* SDAVAssetExportSession.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SDAVAssetExportSession.m; path = SDAVAssetExportSession/SDAVAssetExportSession.m; sourceTree = "<group>"; };
+		BBEB12DD1DC6513C00576B22 /* Fairchild.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Fairchild.h; sourceTree = "<group>"; };
+		BBEB12DF1DC6514700576B22 /* SDAVAssetExportSession.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SDAVAssetExportSession.h; path = SDAVAssetExportSession/SDAVAssetExportSession.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -33,9 +35,9 @@
 		BB0B7B8D1C7111CC00295F44 = {
 			isa = PBXGroup;
 			children = (
-				BB0BA6A71CBDB4E9009D234F /* SDAVAssetExportSession.h */,
+				BBEB12DF1DC6514700576B22 /* SDAVAssetExportSession.h */,
 				BB0BA6A81CBDB4E9009D234F /* SDAVAssetExportSession.m */,
-				BB0B7BCC1C7208A600295F44 /* Fairchild.h */,
+				BBEB12DD1DC6513C00576B22 /* Fairchild.h */,
 				BB0B7BCD1C7208A600295F44 /* Fairchild.m */,
 				BB0B7B9F1C71143100295F44 /* Products */,
 			);
@@ -56,6 +58,8 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BBEB12E41DC6524100576B22 /* SDAVAssetExportSession.h in Headers */,
+				BBEB12E31DC6523D00576B22 /* Fairchild.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -115,8 +119,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BB0B7BCF1C7208A600295F44 /* Fairchild.m in Sources */,
-				BB0BA6AA1CBDB4E9009D234F /* SDAVAssetExportSession.m in Sources */,
+				BBEB12E11DC651EA00576B22 /* SDAVAssetExportSession.m in Sources */,
+				BBEB12E21DC651EF00576B22 /* Fairchild.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -5,6 +5,10 @@
     ],
     [
       "fairchild@git+https://github.com/thsig/fairchild.git"
+    ],
+    [
+      "fairchild@git+https://github.com/thsig/fairchild.git",
+      "/Users/ths/src/rnlib/compression/FairchildSandbox"
     ]
   ],
   "_from": "git+https://github.com/thsig/fairchild.git",
@@ -33,11 +37,11 @@
   "_requiredBy": [
     "/"
   ],
-  "_resolved": "git+https://github.com/thsig/fairchild.git#90015bef5902459f1b20cb33326fb49396b599c7",
-  "_shasum": "4627579e9598ec802a016097fee57985443b928f",
+  "_resolved": "git+https://github.com/thsig/fairchild.git#cf5a8c2be2958f8a8b4cd955eeb8925719203d42",
+  "_shasum": "7d431469cc1ee37d9bc9f58e900ec52733104c74",
   "_shrinkwrap": null,
   "_spec": "fairchild@git+https://github.com/thsig/fairchild.git",
-  "_where": "/Users/ths/src/fronkensteen_native",
+  "_where": "/Users/ths/src/rnlib/compression/FairchildSandbox",
   "author": {
     "email": "thorarinnsigurdsson@gmail.com",
     "name": "Thorarinn Sigurdsson",
