@@ -7,11 +7,15 @@
       "fairchild@git+https://github.com/thsig/fairchild.git"
     ],
     [
+      "fairchild@git+https://github.com/thsig/fairchild.git#master",
+      "/Users/ths/src/fronkensteen_native"
+    ],
+    [
       "fairchild@git+https://github.com/thsig/fairchild.git",
       "/Users/ths/src/rnlib/compression/FairchildSandbox"
     ]
   ],
-  "_from": "git+https://github.com/thsig/fairchild.git",
+  "_from": "git+https://github.com/thsig/fairchild.git#master",
   "_id": "fairchild@0.0.1",
   "_inCache": true,
   "_installable": true,
@@ -20,28 +24,28 @@
   "_requested": {
     "hosted": {
       "directUrl": "https://raw.githubusercontent.com/thsig/fairchild/master/package.json",
-      "gitUrl": "git://github.com/thsig/fairchild.git",
-      "httpsUrl": "git+https://github.com/thsig/fairchild.git",
-      "shortcut": "github:thsig/fairchild",
-      "ssh": "git@github.com:thsig/fairchild.git",
-      "sshUrl": "git+ssh://git@github.com/thsig/fairchild.git",
+      "gitUrl": "git://github.com/thsig/fairchild.git#master",
+      "httpsUrl": "git+https://github.com/thsig/fairchild.git#master",
+      "shortcut": "github:thsig/fairchild#master",
+      "ssh": "git@github.com:thsig/fairchild.git#master",
+      "sshUrl": "git+ssh://git@github.com/thsig/fairchild.git#master",
       "type": "github"
     },
     "name": "fairchild",
-    "raw": "fairchild@git+https://github.com/thsig/fairchild.git",
-    "rawSpec": "git+https://github.com/thsig/fairchild.git",
+    "raw": "fairchild@git+https://github.com/thsig/fairchild.git#master",
+    "rawSpec": "git+https://github.com/thsig/fairchild.git#master",
     "scope": null,
-    "spec": "git+https://github.com/thsig/fairchild.git",
+    "spec": "git+https://github.com/thsig/fairchild.git#master",
     "type": "hosted"
   },
   "_requiredBy": [
     "/"
   ],
-  "_resolved": "git+https://github.com/thsig/fairchild.git#cf5a8c2be2958f8a8b4cd955eeb8925719203d42",
-  "_shasum": "7d431469cc1ee37d9bc9f58e900ec52733104c74",
+  "_resolved": "git+https://github.com/thsig/fairchild.git#9cf870dcf14a65d4c4da19d6386d5e6d32fc32bf",
+  "_shasum": "76822c441826104569e7fc19c485581b1a290a9b",
   "_shrinkwrap": null,
-  "_spec": "fairchild@git+https://github.com/thsig/fairchild.git",
-  "_where": "/Users/ths/src/rnlib/compression/FairchildSandbox",
+  "_spec": "fairchild@git+https://github.com/thsig/fairchild.git#master",
+  "_where": "/Users/ths/src/fronkensteen_native",
   "author": {
     "email": "thorarinnsigurdsson@gmail.com",
     "name": "Thorarinn Sigurdsson",
