@@ -23,14 +23,16 @@ var compressionError = (err) => {
 var Fairchild = {
 
   // Supported outputOtions:
-  // keepOriginal:  boolean (default: false)
-  // fileType:      'mov' | 'mp4' (default: same as source)
-  // isAsset:       boolean (default: inferred from path prefix)
-  // resolution:    '1080p' | '720p' (default) | '480p'
-  // cropSquare:    boolean (default: false)
+  // keepOriginal: boolean (default: false)
+  // fileType:         'mov' | 'mp4' (default: same as source)
+  // isAsset:          boolean (default: inferred from path prefix)
+  // resolution:       '1080p' | '720p' (default) | '480p'
+  // cropSquare:       boolean (default: false)
   // cropSquareVerticalOffset : number from 0.0 to 1.0 (default: 0.0)
-  // bitRate:       integer (default: same as source)
-  // rotateDegrees: integer (default: 0)
+  // bitRate:          integer (default: same as source)
+  // rotateDegrees:    integer (default: 0)
+  // startTimeSeconds: float
+  // endTimeSeconds:   float
   compressVideo(inputFilePath, outputOptions = {}) {
     if (inputFilePath) {
       if (inputFilePath.match(/^\//)) {
@@ -57,6 +59,8 @@ var Fairchild = {
         cropSquareVerticalOffset: vo,
         bitRate:       o.bitRate,
         rotateDegrees: o.rotateDegrees || 0,
+        startTimeSeconds:  o.startTimeSeconds ? o.startTimeSeconds : -1,
+        endTimeSeconds:    o.endTimeSeconds ? o.endTimeSeconds : -1
       };
       return _compressVideo(inputFilePath, opts)
         .catch(compressionError);

@@ -40,6 +40,8 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
   NSNumber *bitRate                  = [outputOptions objectForKey:@"bitRate"];
   NSNumber *cropSquareVerticalOffset = [outputOptions objectForKey:@"cropSquareVerticalOffset"];
   int rotateDegrees                  = [[outputOptions objectForKey:@"rotateDegrees"] intValue];
+  float startTimeSeconds             = [[outputOptions objectForKey:@"startTimeSeconds"] floatValue];
+  float endTimeSeconds               = [[outputOptions objectForKey:@"endTimeSeconds"] floatValue];
   
   if (!outputExtension) { outputExtension = @"mov"; }
 
@@ -98,6 +100,8 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
   NSLog(@"original dimensions: width %f, height %f", originalDimensions.width, originalDimensions.height);
   NSLog(@"output dimensions: width %f, height %f", outputDimensions.width, outputDimensions.height);
   
+  CMTimeRange outputTimeRange = [self outputTimeRange:asset startTimeSeconds:startTimeSeconds endTimeSeconds:endTimeSeconds];
+  
   //
   // Video composition operations & compression settings
   //
@@ -105,9 +109,10 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
   videoComposition.frameDuration = CMTimeMake(1, 30);
   videoComposition.renderSize = CGSizeMake(outputDimensions.width, outputDimensions.height);
   AVMutableVideoCompositionInstruction *instruction = [AVMutableVideoCompositionInstruction videoCompositionInstruction];
-  float duration = CMTimeGetSeconds(asset.duration);
-  NSLog(@"duration %f", duration);
-  instruction.timeRange = CMTimeRangeMake(kCMTimeZero, CMTimeMakeWithSeconds(duration + 1, 30));
+  float outputDurationSeconds = CMTimeGetSeconds(outputTimeRange.duration);
+  float outputStartSeconds = CMTimeGetSeconds(outputTimeRange.start);
+  instruction.timeRange = CMTimeRangeMake(CMTimeMakeWithSeconds(outputStartSeconds, 30),
+                                          CMTimeMakeWithSeconds(outputDurationSeconds + 1, 30));
   AVMutableVideoCompositionLayerInstruction *transformer = [AVMutableVideoCompositionLayerInstruction videoCompositionLayerInstructionWithAssetTrack:videoTrack];
 
   // Configure transforms
@@ -141,7 +146,7 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
     [self addTransform:transforms new:CGAffineTransformMakeTranslation(-cropOffsetPixels, 0)];
   }
   CGAffineTransform finalTransform = [self combineTransforms:transforms];
-  [transformer setTransform:finalTransform atTime:kCMTimeZero];
+  [transformer setTransform:finalTransform atTime:outputTimeRange.start];
 
   // END
 
@@ -153,6 +158,7 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
   encoder.outputURL = outputFileURL;
   encoder.shouldOptimizeForNetworkUse = YES;
   encoder.videoComposition = videoComposition;
+  encoder.timeRange = outputTimeRange;
 
   NSDictionary *compressionSettings;
   if (bitRate) {
@@ -236,6 +242,23 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
       NSLog(@"Video export failed with error: %@ (%d)", encoder.error.localizedDescription, encoder.error.code);
     }
   }];
+}
+
+- (CMTimeRange)outputTimeRange:(AVAsset *)asset startTimeSeconds:(float)startTimeSeconds endTimeSeconds:(float)endTimeSeconds
+{
+  float originalAssetDuration = CMTimeGetSeconds(asset.duration);
+  CMTimeScale timeScale = asset.duration.timescale;
+  
+  // Ensure that start time is in [0, originalAssetDuration - 2 milliseconds) and that
+  // end time is in [2 milliseconds, originalAssetDuration].
+  float clampedStartTimeSeconds = (startTimeSeconds > originalAssetDuration - 0.02) ? 0 : MIN(MAX(0, startTimeSeconds), originalAssetDuration - 0.002);
+  float clampedEndTimeSeconds = (endTimeSeconds < 0) ? originalAssetDuration : MIN(MAX(0.002, endTimeSeconds), originalAssetDuration);
+  
+  // We use millisecond precision
+  CMTime startTime = CMTimeMake(clampedStartTimeSeconds * 1000, 1000);
+  CMTime endTime   = CMTimeMake(clampedEndTimeSeconds * 1000, 1000);
+  
+  return CMTimeRangeMake(startTime, CMTimeSubtract(endTime, startTime));
 }
 
 - (NSString *)videoCompressionPreset:(NSNumber *)quality
