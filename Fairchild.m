@@ -402,7 +402,7 @@ RCT_EXPORT_METHOD(thumbForVideo:(NSString *)inputFilePath
   if (isAsset) {
     inputFileURL = [NSURL URLWithString:inputFilePath];
   } else {
-    inputFileURL = [NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:inputFilePath ofType:nil]];
+    inputFileURL = [NSURL fileURLWithPath:inputFilePath];
   }
   NSURL *outputFileURL;
   NSFileManager *fileManager = [NSFileManager defaultManager];
@@ -435,14 +435,15 @@ RCT_EXPORT_METHOD(thumbForVideo:(NSString *)inputFilePath
     NSDate *exportEnd = [NSDate date];
     NSNumber *thumbSize;
     CFURLRef cfurl = (__bridge CFURLRef)outputFileURL;
-    CGImageDestinationRef destination = CGImageDestinationCreateWithURL(cfurl, kUTTypePNG, 1, NULL);
+    CGImageDestinationRef destination = CGImageDestinationCreateWithURL(cfurl, kUTTypePNG, 2, NULL);
     CGImageDestinationAddImage(destination, thumb, nil);
     CGImageDestinationFinalize(destination);
-                                      
+    float actualTimeSeconds = CMTimeGetSeconds(actualTime);
+                                  
     return callback(@[[NSNull null], @{
       @"uri":               [outputFileURL path],
       @"width":             [NSNumber numberWithInt:width],
-      @"actualTimeSeconds": [NSNumber numberWithFloat:CMTimeGetSeconds(actualTime)]
+      @"actualTimeSeconds": [NSNumber numberWithFloat:actualTimeSeconds]
     }]);
   }];
 }
