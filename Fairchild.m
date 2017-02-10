@@ -6,6 +6,7 @@
 #import <AVFoundation/AVFoundation.h>
 @import MobileCoreServices;
 @import ImageIO;
+@import Photos;
 
 /* #import <Photos/PHAsset.h> // for testing */
 
@@ -452,6 +453,57 @@ RCT_EXPORT_METHOD(thumbForVideo:(NSString *)inputFilePath
       @"actualTimeSeconds": [NSNumber numberWithFloat:actualTimeSeconds]
     }]);
   }];
+}
+
+/* ----------------- */
+/* Image compression  */
+/* ----------------- */
+
+RCT_EXPORT_METHOD(compressImage:(NSString *)inputFilePath
+                 outputOptions:(NSDictionary *)outputOptions
+                      callback:(RCTResponseSenderBlock)callback)
+{
+  dispatch_queue_t globalConcurrentQueue =
+  dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+  
+  dispatch_async(globalConcurrentQueue, ^{
+    float maxPixelCount = 1920.0 * 1080.0; // 720p
+    bool isAsset = [RCTConvert BOOL:[outputOptions objectForKey:@"isAsset"]];
+    NSURL *inputFileURL;
+    if (isAsset) {
+      inputFileURL = [NSURL URLWithString:inputFilePath];
+    } else {
+      inputFileURL = [NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:inputFilePath ofType:nil]];
+    }
+    NSData *imageData = [NSData dataWithContentsOfURL:inputFileURL];
+    UIImage *inputImage = [UIImage imageWithData:imageData];
+  
+    CGSize originalSize = inputImage.size;
+    int originalPixelCount = originalSize.width * originalSize.height;
+    double outputScale = (originalPixelCount > maxPixelCount) ? maxPixelCount / originalPixelCount : 1.0;
+    CGSize outputSize = CGSizeMake((int) (originalSize.width * outputScale), (int) (originalSize.height * outputScale));
+    
+    UIGraphicsBeginImageContext(outputSize);
+    [inputImage drawInRect:CGRectMake(0, 0, outputSize.width, outputSize.height)];
+    UIImage *compressedImage = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    
+    NSData *pngData = UIImagePNGRepresentation(compressedImage);
+    NSString *guid = [[NSProcessInfo processInfo] globallyUniqueString];
+    NSURL *outputFileURL = [NSURL fileURLWithPath:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject]];
+    outputFileURL = [outputFileURL URLByAppendingPathComponent:[@[guid, @"png"] componentsJoinedByString:@"."]];
+    
+    NSError* error;
+    [pngData writeToURL:outputFileURL options:0 error:&error];
+    
+    NSData *outputData = [NSData dataWithContentsOfURL:outputFileURL];
+    
+    callback(@[[NSNull null], @{
+      @"outputFileURI":    [outputFileURL path],
+      @"width":  [NSNumber numberWithInt:outputSize.width],
+      @"height": [NSNumber numberWithInt:outputSize.height]
+    }]);
+  });
 }
 
 - (NSDictionary *)constantsToExport

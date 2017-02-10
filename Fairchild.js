@@ -14,6 +14,7 @@ var Promise = require('bluebird');
 
 var _compressVideo = Promise.promisify(Fairchild.compressVideo);
 var _thumbForVideo = Promise.promisify(Fairchild.thumbForVideo);
+var _compressImage = Promise.promisify(Fairchild.compressImage);
 
 var compressionError = (err) => {
   console.log('compressionError:', err);
@@ -95,6 +96,26 @@ var Fairchild = {
       return _thumbForVideo(inputFilePath, opts);
     } else {
       console.error('Error: Fairchild.extractThumb called with blank inputFilePath.');
+    }
+  },
+
+  compressImage(inputFilePath, outputOptions = {}) {
+    if (inputFilePath) {
+      if (inputFilePath.match(/^\//)) {
+        inputFilePath = `file://${inputFilePath}`;
+      }
+      var o = outputOptions;
+      var isAsset = o.isAsset;
+      if (isAsset === null || isAsset === undefined) {
+        isAsset = !!inputFilePath.match(/^(assets-library|file):/);
+      }
+      var opts = {
+        isAsset: isAsset,
+        keepOriginal: o.keepOriginal
+      };
+      return _compressImage(inputFilePath, opts);
+    } else {
+      console.error('Error: Fairchild.compressImage called with blank inputFilePath.');
     }
   }
 
