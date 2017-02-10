@@ -75,6 +75,11 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
   NSNumber *originalSize = [self fileSize:asset];
   AVAssetTrack *videoTrack = [[asset tracksWithMediaType:AVMediaTypeVideo] firstObject];
   AVAssetTrack *audioTrack = [[asset tracksWithMediaType:AVMediaTypeAudio] firstObject];
+  
+  CGAffineTransform tx = [videoTrack preferredTransform];
+  int trackRotationDegrees = acos(tx.a) * 180 / M_PI;
+  rotateDegrees = rotateDegrees - (trackRotationDegrees - 90);
+  
   CGSize originalDimensions = videoTrack.naturalSize;
   CGSize outputDimensions;
   double outputScale;
@@ -97,6 +102,7 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
     cropOffsetPixels = 0;
   }
   
+  NSLog(@"track rotation: %f degrees", trackRotationDegrees);
   NSLog(@"original dimensions: width %f, height %f", originalDimensions.width, originalDimensions.height);
   NSLog(@"output dimensions: width %f, height %f", outputDimensions.width, outputDimensions.height);
   
