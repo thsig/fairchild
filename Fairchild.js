@@ -31,7 +31,7 @@ var Fairchild = {
   // cropSquare:       boolean (default: false)
   // cropSquareVerticalOffset : number from 0.0 to 1.0 (default: 0.0)
   // bitRate:          integer (default: same as source)
-  // rotateDegrees:    integer (default: 0)
+  // orientation:      'portrait' (default) | 'landscape'
   // startTimeSeconds: float
   // endTimeSeconds:   float
   compressVideo(inputFilePath, outputOptions = {}) {
@@ -52,16 +52,16 @@ var Fairchild = {
         if (vo < 0.0) { vo = 0.0; }
       }
       var opts = {
-        fileType:      ft,
-        keepOriginal:  o.keepOriginal || false,
-        isAsset:       isAsset || false,
-        resolution:    o.resolution,
-        cropSquare:    o.cropSquare || false,
+        fileType:                 ft,
+        keepOriginal:             o.keepOriginal || false,
+        isAsset:                  isAsset || false,
+        resolution:               o.resolution,
+        cropSquare:               o.cropSquare || false,
         cropSquareVerticalOffset: vo,
-        bitRate:       o.bitRate,
-        rotateDegrees: o.rotateDegrees || 0,
-        startTimeSeconds:  o.startTimeSeconds ? o.startTimeSeconds : -1,
-        endTimeSeconds:    o.endTimeSeconds ? o.endTimeSeconds : -1
+        bitRate:                  o.bitRate,
+        orientation:              o.orientation || 'portrait',
+        startTimeSeconds:         o.startTimeSeconds ? o.startTimeSeconds : -1,
+        endTimeSeconds:           o.endTimeSeconds ? o.endTimeSeconds : -1
       };
       return _compressVideo(inputFilePath, opts)
         .catch(compressionError);

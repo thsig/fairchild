@@ -40,7 +40,7 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
   NSString *resolution               = [outputOptions objectForKey:@"resolution"];
   NSNumber *bitRate                  = [outputOptions objectForKey:@"bitRate"];
   NSNumber *cropSquareVerticalOffset = [outputOptions objectForKey:@"cropSquareVerticalOffset"];
-  int rotateDegrees                  = [[outputOptions objectForKey:@"rotateDegrees"] intValue];
+  NSString *orientation              = [outputOptions objectForKey:@"orientation"]; // target orientation of output file
   float startTimeSeconds             = [[outputOptions objectForKey:@"startTimeSeconds"] floatValue];
   float endTimeSeconds               = [[outputOptions objectForKey:@"endTimeSeconds"] floatValue];
   
@@ -77,11 +77,25 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
   AVAssetTrack *videoTrack = [[asset tracksWithMediaType:AVMediaTypeVideo] firstObject];
   AVAssetTrack *audioTrack = [[asset tracksWithMediaType:AVMediaTypeAudio] firstObject];
   
-  CGAffineTransform tx = [videoTrack preferredTransform];
-  int trackRotationDegrees = acos(tx.a) * 180 / M_PI;
-  rotateDegrees = rotateDegrees - (trackRotationDegrees - 90);
-  
+  // CGAffineTransform tx = [videoTrack preferredTransform];
+  //  int trackRotationDegrees = acos(tx.a) * 180 / M_PI;
   CGSize originalDimensions = videoTrack.naturalSize;
+  int rotateDegrees;
+  if (originalDimensions.width > originalDimensions.height) {
+    if ([orientation isEqualToString:@"portrait"]) {
+      rotateDegrees = 90;
+    } else {
+      rotateDegrees = 0;
+    }
+  } else {
+    if ([orientation isEqualToString:@"portrait"]) {
+      rotateDegrees = 0;
+    } else {
+      rotateDegrees = 90;
+    }
+  }
+  // rotateDegrees = rotateDegrees - (trackRotationDegrees - 90);
+  
   CGSize outputDimensions;
   double outputScale;
   
@@ -91,6 +105,7 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
   } else {
     outputScale = 1.0;
   }
+  
   outputDimensions = [self outputDimensions:originalDimensions
                                 outputScale:outputScale rotateDegrees:rotateDegrees
                                  cropSquare:cropSquare];
@@ -103,7 +118,6 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
     cropOffsetPixels = 0;
   }
   
-  NSLog(@"track rotation: %f degrees", trackRotationDegrees);
   NSLog(@"original dimensions: width %f, height %f", originalDimensions.width, originalDimensions.height);
   NSLog(@"output dimensions: width %f, height %f", outputDimensions.width, outputDimensions.height);
   
@@ -111,6 +125,7 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
   
   //
   // Video composition operations & compression settings
+  
   //
   AVMutableVideoComposition *videoComposition = [AVMutableVideoComposition videoComposition];
   videoComposition.frameDuration = CMTimeMake(1, 30);
@@ -122,40 +137,11 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
                                           CMTimeMakeWithSeconds(outputDurationSeconds + 1, 30));
   AVMutableVideoCompositionLayerInstruction *transformer = [AVMutableVideoCompositionLayerInstruction videoCompositionLayerInstructionWithAssetTrack:videoTrack];
 
-  // Configure transforms
-  // Note: combineTransforms combines the transforms in reverse/right-associative order
-
-  NSMutableArray *transforms = [[NSMutableArray alloc] init];
-  if (outputScale == 1.0) {
-    [self addTransform:transforms new:CGAffineTransformIdentity];
-  } else {
-    [self addTransform:transforms new:CGAffineTransformMakeScale(outputScale, outputScale)];
-  }
-  if (rotateDegrees) {
-    // Convert degrees to radians
-    CGAffineTransform rotationTransform = CGAffineTransformMakeRotation(rotateDegrees *  M_PI / 180.0);
-    int shorterDimensionLength; int longerDimensionLength;
-    if (originalDimensions.height < originalDimensions.width) {
-      shorterDimensionLength = originalDimensions.height;
-      longerDimensionLength  = originalDimensions.width;
-    } else {
-      shorterDimensionLength = originalDimensions.width;
-      longerDimensionLength  = originalDimensions.height;
-    }
-    if (rotateDegrees == 90) {
-      [self addTransform:transforms new:CGAffineTransformMakeTranslation(shorterDimensionLength, -cropOffsetPixels)];
-      [self addTransform:transforms new:rotationTransform];
-    } else if (rotateDegrees == -90) {
-      [self addTransform:transforms new:rotationTransform];
-      [self addTransform:transforms new:CGAffineTransformMakeTranslation(-longerDimensionLength + cropOffsetPixels, 0)];
-    }
-  } else {
-    [self addTransform:transforms new:CGAffineTransformMakeTranslation(-cropOffsetPixels, 0)];
-  }
-  CGAffineTransform finalTransform = [self combineTransforms:transforms];
+  CGAffineTransform finalTransform = [self finalTransform:originalDimensions
+                                              outputScale:outputScale
+                                            rotateDegrees:rotateDegrees
+                                         cropOffsetPixels:cropOffsetPixels];
   [transformer setTransform:finalTransform atTime:outputTimeRange.start];
-
-  // END
 
   instruction.layerInstructions = [NSArray arrayWithObject:transformer];
   videoComposition.instructions = [NSArray arrayWithObject:instruction];
@@ -318,12 +304,12 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
       outputHeight = originalHeight * outputScale;
       outputWidth = outputHeight;
     } else {
-      outputWidth = outputWidth * outputScale;
+      outputWidth = originalWidth * outputScale;
       outputHeight = outputWidth;
     }
     // Make sure width and height are multiples of 16 to avoid green borders.
-    while (outputWidth % 16 > 0)  { outputWidth++; }
-    while (outputHeight % 16 > 0) { outputHeight++; }
+    while (outputWidth % 2 > 0)  { outputWidth++; }
+    while (outputHeight % 2 > 0) { outputHeight++; }
 
   } else {
     if (rotateDegrees == 90 || rotateDegrees == -90) {
@@ -358,6 +344,41 @@ cropSquareVerticalOffset:(NSNumber *)cropSquareVerticalOffset
   }
 }
 
+- (CGAffineTransform)finalTransform:(CGSize)originalDimensions
+                        outputScale:(double)outputScale
+                      rotateDegrees:(int)rotateDegrees
+                   cropOffsetPixels:(int)cropOffsetPixels
+{
+  NSMutableArray *transforms = [[NSMutableArray alloc] init];
+  if (outputScale == 1.0) {
+    [self addTransform:transforms new:CGAffineTransformIdentity];
+  } else {
+    [self addTransform:transforms new:CGAffineTransformMakeScale(outputScale, outputScale)];
+  }
+  int shorterDimensionLength; int longerDimensionLength;
+  if (originalDimensions.height < originalDimensions.width) {
+    shorterDimensionLength = originalDimensions.height;
+    longerDimensionLength  = originalDimensions.width;
+  } else {
+    shorterDimensionLength = originalDimensions.width;
+    longerDimensionLength  = originalDimensions.height;
+  }
+  if (rotateDegrees) {
+    // Convert degrees to radians
+    CGAffineTransform rotationTransform = CGAffineTransformMakeRotation(rotateDegrees *  M_PI / 180.0);
+    if (rotateDegrees == 90) {
+      [self addTransform:transforms new:CGAffineTransformMakeTranslation(shorterDimensionLength, -cropOffsetPixels)];
+      [self addTransform:transforms new:rotationTransform];
+    } else if (rotateDegrees == -90) {
+      [self addTransform:transforms new:rotationTransform];
+      [self addTransform:transforms new:CGAffineTransformMakeTranslation(-longerDimensionLength + cropOffsetPixels, 0)];
+    }
+  } else {
+    [self addTransform:transforms new:CGAffineTransformMakeTranslation(0, -cropOffsetPixels)];
+  }
+  return [self combineTransforms:transforms];
+}
+
 // Need to wrap the CGAffineTransform-s in NSValue-s, since NSArray only accepts objects.
 - (NSMutableArray *)addTransform:(NSMutableArray *)transforms new:(CGAffineTransform)newTransform
 {
@@ -365,6 +386,7 @@ cropSquareVerticalOffset:(NSNumber *)cropSquareVerticalOffset
   return transforms;
 }
 
+  // Note: Combines the transforms in reverse/right-associative order
 - (CGAffineTransform)combineTransforms:(NSMutableArray *)transforms
 {
   int count = [transforms count];

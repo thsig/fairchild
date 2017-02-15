@@ -29,7 +29,7 @@ var compressionOptions = {
   resolution: '720p',
   bitRate: 5 * 1000 * 1024,
   cropSquare: true,
-  rotateDegrees: 90
+  orientation: 'portrait'
 };
 
 this.refs.camera.capture()
@@ -78,5 +78,5 @@ When true, the output file is cropped to a square aspect ratio such that its wid
 When `cropSquare = true`, sets the vertical offset of the top-left corner of the crop square to `cropSquareVerticalOffset * height`. Useful for cropping when the visible area of the camera in the UI is partially obscured by an overlay, to ensure that the output video is cropped in a way consistent with what the user saw during recording.
 ##### `bitRate - integer`
 Default: Same as source file. Indicates the average bitrate to be used for the output file.
-##### `rotateDegrees: 0 (default) || 90 || -90 || 180`
-When not 0, rotates the output file by `rotateDegrees` degrees.
+##### `orientation: 'portrait' (default) | 'landscape'`
+The target orientation of the output file.
