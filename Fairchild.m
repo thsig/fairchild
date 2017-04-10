@@ -1,8 +1,8 @@
-#import "RCTConvert.h"
+#import <React/RCTConvert.h>
 #import "Fairchild.h"
 #import "SDAVAssetExportSession.h"
-#import "RCTBridge.h"
-#import "RCTEventDispatcher.h"
+#import <React/RCTBridge.h>
+#import <React/RCTEventDispatcher.h>
 #import <AVFoundation/AVFoundation.h>
 @import MobileCoreServices;
 @import ImageIO;

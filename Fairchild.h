@@ -1,5 +1,5 @@
-#import "RCTBridgeModule.h"
-#import "RCTLog.h"
+#import <React/RCTBridgeModule.h>
+#import <React/RCTLog.h>
 
 @interface Fairchild : NSObject <RCTBridgeModule>
 
