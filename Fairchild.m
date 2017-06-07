@@ -436,7 +436,7 @@ RCT_EXPORT_METHOD(thumbForVideo:(NSString *)inputFilePath
   NSURL *outputFileURL;
   NSFileManager *fileManager = [NSFileManager defaultManager];
   NSString *guid = [[NSProcessInfo processInfo] globallyUniqueString];
-  outputFileURL = [NSURL fileURLWithPath:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject]];
+  outputFileURL = [NSURL fileURLWithPath:[NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) firstObject]];
   outputFileURL = [outputFileURL URLByAppendingPathComponent:[@[guid, @"png"] componentsJoinedByString:@"."]];
   
   AVURLAsset *asset = [AVURLAsset URLAssetWithURL:inputFileURL options:nil];
@@ -464,11 +464,14 @@ RCT_EXPORT_METHOD(thumbForVideo:(NSString *)inputFilePath
     NSDate *exportEnd = [NSDate date];
     NSNumber *thumbSize;
     CFURLRef cfurl = (__bridge CFURLRef)outputFileURL;
-    CGImageDestinationRef destination = CGImageDestinationCreateWithURL(cfurl, kUTTypePNG, 2, NULL);
+    CGImageDestinationRef destination = CGImageDestinationCreateWithURL(cfurl, kUTTypePNG, 1, NULL);
     CGImageDestinationAddImage(destination, thumb, nil);
-    CGImageDestinationFinalize(destination);
+    BOOL writeSuccessful = CGImageDestinationFinalize(destination);
     float actualTimeSeconds = CMTimeGetSeconds(actualTime);
-                                  
+    if (error) {
+      NSLog(@"Fairchild - Error during thumb extraction: %@", error);
+    }
+                                         
     return callback(@[[NSNull null], @{
       @"uri":               [outputFileURL path],
       @"width":             [NSNumber numberWithInt:width],
