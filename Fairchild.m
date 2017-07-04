@@ -218,6 +218,7 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
       NSLog(@"original size %@", originalSize);
       NSLog(@"compressed size %@", compressedSize);
       NSLog(@"compressed dimensions: width %i, height %i", compressedWidth, compressedHeight);
+      NSLog(@"outputTimeRange starts at seconds %f, duration %f", outputStartSeconds, outputDurationSeconds);
       NSLog(@"----------------------");
       return callback(@[[NSNull null], @{
          @"outputFileURI":       [outputFileURL path],
