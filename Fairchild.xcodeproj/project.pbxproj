@@ -7,18 +7,26 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		BBEB12E11DC651EA00576B22 /* SDAVAssetExportSession.m in Sources */ = {isa = PBXBuildFile; fileRef = BB0BA6A81CBDB4E9009D234F /* SDAVAssetExportSession.m */; };
+		BBBC85D01F2E39C4004A699B /* README.md in Sources */ = {isa = PBXBuildFile; fileRef = BBBC85CC1F2E39C4004A699B /* README.md */; };
+		BBBC85D11F2E39C4004A699B /* SDAVAssetExportSession.h in Headers */ = {isa = PBXBuildFile; fileRef = BBBC85CD1F2E39C4004A699B /* SDAVAssetExportSession.h */; };
+		BBBC85D21F2E39C4004A699B /* SDAVAssetExportSession.m in Sources */ = {isa = PBXBuildFile; fileRef = BBBC85CE1F2E39C4004A699B /* SDAVAssetExportSession.m */; };
 		BBEB12E21DC651EF00576B22 /* Fairchild.m in Sources */ = {isa = PBXBuildFile; fileRef = BB0B7BCD1C7208A600295F44 /* Fairchild.m */; };
 		BBEB12E31DC6523D00576B22 /* Fairchild.h in Headers */ = {isa = PBXBuildFile; fileRef = BBEB12DD1DC6513C00576B22 /* Fairchild.h */; };
-		BBEB12E41DC6524100576B22 /* SDAVAssetExportSession.h in Headers */ = {isa = PBXBuildFile; fileRef = BBEB12DF1DC6514700576B22 /* SDAVAssetExportSession.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		BB0778681F2E3235008B7C05 /* SDAVAssetExportSession.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDAVAssetExportSession.framework; path = "/Users/ths/src/rnlib/VideoSandbox/ios/Pods/../build/Debug-iphoneos/SDAVAssetExportSession/SDAVAssetExportSession.framework"; sourceTree = "<absolute>"; };
 		BB0B7B9E1C71143100295F44 /* libFairchild.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libFairchild.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB0B7BCD1C7208A600295F44 /* Fairchild.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Fairchild.m; sourceTree = "<group>"; };
-		BB0BA6A81CBDB4E9009D234F /* SDAVAssetExportSession.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SDAVAssetExportSession.m; path = SDAVAssetExportSession/SDAVAssetExportSession.m; sourceTree = "<group>"; };
+		BB546DD81F2909C3009E7AF3 /* SDAVAssetExportSession.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDAVAssetExportSession.framework; path = "/Users/ths/src/rnlib/VideoSandbox/ios/Pods/../build/Debug-iphoneos/SDAVAssetExportSession/SDAVAssetExportSession.framework"; sourceTree = "<absolute>"; };
+		BBA2A4B61F2E2DC400F40890 /* SDAVAssetExportSession.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDAVAssetExportSession.framework; path = "/Users/ths/src/rnlib/VideoSandbox/ios/Pods/../build/Debug-iphoneos/SDAVAssetExportSession/SDAVAssetExportSession.framework"; sourceTree = "<absolute>"; };
+		BBBC85CA1F2E39C4004A699B /* .npmignore */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = .npmignore; sourceTree = "<group>"; };
+		BBBC85CB1F2E39C4004A699B /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		BBBC85CC1F2E39C4004A699B /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		BBBC85CD1F2E39C4004A699B /* SDAVAssetExportSession.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SDAVAssetExportSession.h; sourceTree = "<group>"; };
+		BBBC85CE1F2E39C4004A699B /* SDAVAssetExportSession.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SDAVAssetExportSession.m; sourceTree = "<group>"; };
+		BBBC85CF1F2E39C4004A699B /* SDAVAssetExportSession.podspec */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = SDAVAssetExportSession.podspec; sourceTree = "<group>"; };
 		BBEB12DD1DC6513C00576B22 /* Fairchild.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Fairchild.h; sourceTree = "<group>"; };
-		BBEB12DF1DC6514700576B22 /* SDAVAssetExportSession.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SDAVAssetExportSession.h; path = SDAVAssetExportSession/SDAVAssetExportSession.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -35,11 +43,11 @@
 		BB0B7B8D1C7111CC00295F44 = {
 			isa = PBXGroup;
 			children = (
-				BBEB12DF1DC6514700576B22 /* SDAVAssetExportSession.h */,
-				BB0BA6A81CBDB4E9009D234F /* SDAVAssetExportSession.m */,
 				BBEB12DD1DC6513C00576B22 /* Fairchild.h */,
 				BB0B7BCD1C7208A600295F44 /* Fairchild.m */,
+				BBBC85C91F2E39C4004A699B /* SDAVAssetExportSession */,
 				BB0B7B9F1C71143100295F44 /* Products */,
+				BB546DD71F2909C3009E7AF3 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -51,6 +59,29 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		BB546DD71F2909C3009E7AF3 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				BB0778681F2E3235008B7C05 /* SDAVAssetExportSession.framework */,
+				BBA2A4B61F2E2DC400F40890 /* SDAVAssetExportSession.framework */,
+				BB546DD81F2909C3009E7AF3 /* SDAVAssetExportSession.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		BBBC85C91F2E39C4004A699B /* SDAVAssetExportSession */ = {
+			isa = PBXGroup;
+			children = (
+				BBBC85CA1F2E39C4004A699B /* .npmignore */,
+				BBBC85CB1F2E39C4004A699B /* LICENSE */,
+				BBBC85CC1F2E39C4004A699B /* README.md */,
+				BBBC85CD1F2E39C4004A699B /* SDAVAssetExportSession.h */,
+				BBBC85CE1F2E39C4004A699B /* SDAVAssetExportSession.m */,
+				BBBC85CF1F2E39C4004A699B /* SDAVAssetExportSession.podspec */,
+			);
+			path = SDAVAssetExportSession;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -58,7 +89,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BBEB12E41DC6524100576B22 /* SDAVAssetExportSession.h in Headers */,
+				BBBC85D11F2E39C4004A699B /* SDAVAssetExportSession.h in Headers */,
 				BBEB12E31DC6523D00576B22 /* Fairchild.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -71,8 +102,8 @@
 			buildConfigurationList = BB0B7BA51C71143100295F44 /* Build configuration list for PBXNativeTarget "Fairchild" */;
 			buildPhases = (
 				BB0B7B9A1C71143100295F44 /* Sources */,
-				BB0B7B9B1C71143100295F44 /* Frameworks */,
 				BB0B7B9C1C71143100295F44 /* Headers */,
+				BB0B7B9B1C71143100295F44 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -119,7 +150,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BBEB12E11DC651EA00576B22 /* SDAVAssetExportSession.m in Sources */,
+				BBBC85D01F2E39C4004A699B /* README.md in Sources */,
+				BBBC85D21F2E39C4004A699B /* SDAVAssetExportSession.m in Sources */,
 				BBEB12E21DC651EF00576B22 /* Fairchild.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -187,6 +219,10 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				OTHER_LDFLAGS = (
+					"-ObjC",
+					"$(inherited)",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -235,6 +271,10 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				MTL_ENABLE_DEBUG_INFO = NO;
+				OTHER_LDFLAGS = (
+					"-ObjC",
+					"$(inherited)",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;

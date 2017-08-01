@@ -1,5 +1,5 @@
 //
-//  SDAVAssetExportSession.m
+// SDAVAssetExportSession.m
 //
 // This file is part of the SDAVAssetExportSession package.
 //
@@ -13,7 +13,7 @@
 
 #import "SDAVAssetExportSession.h"
 
-@interface SDAVAssetExportSession ()
+@interface FairchildSDAVAssetExportSession ()
 
 @property (nonatomic, assign, readwrite) float progress;
 
@@ -29,7 +29,7 @@
 
 @end
 
-@implementation SDAVAssetExportSession
+@implementation FairchildSDAVAssetExportSession
 {
     NSError *_error;
     NSTimeInterval duration;
@@ -38,7 +38,7 @@
 
 + (id)exportSessionWithAsset:(AVAsset *)asset
 {
-    return [SDAVAssetExportSession.alloc initWithAsset:asset];
+    return [FairchildSDAVAssetExportSession.alloc initWithAsset:asset];
 }
 
 - (id)initWithAsset:(AVAsset *)asset
@@ -288,10 +288,10 @@
         NSDictionary *videoCompressionProperties = [self.videoSettings objectForKey:AVVideoCompressionPropertiesKey];
         if (videoCompressionProperties)
         {
-            NSNumber *maxKeyFrameInterval = [videoCompressionProperties objectForKey:AVVideoMaxKeyFrameIntervalKey];
-            if (maxKeyFrameInterval)
+            NSNumber *frameRate = [videoCompressionProperties objectForKey:AVVideoAverageNonDroppableFrameRateKey];
+            if (frameRate)
             {
-                trackFrameRate = maxKeyFrameInterval.floatValue;
+                trackFrameRate = frameRate.floatValue;
             }
         }
     }
@@ -309,6 +309,7 @@
 	CGSize targetSize = CGSizeMake([self.videoSettings[AVVideoWidthKey] floatValue], [self.videoSettings[AVVideoHeightKey] floatValue]);
 	CGSize naturalSize = [videoTrack naturalSize];
 	CGAffineTransform transform = videoTrack.preferredTransform;
+    	transform.ty = 0;
 	CGFloat videoAngleInDegree  = atan2(transform.b, transform.a) * 180 / M_PI;
 	if (videoAngleInDegree == 90 || videoAngleInDegree == -90) {
 		CGFloat width = naturalSize.width;

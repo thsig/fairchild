@@ -1,7 +1,7 @@
 //
-//  SDAVAssetExportSession.h
+//  FairchildSDAVAssetExportSession.h
 //
-// This file is part of the SDAVAssetExportSession package.
+// This file is part of the FairchildSDAVAssetExportSession package.
 //
 // Created by Olivier Poitrey <rs@dailymotion.com> on 13/03/13.
 // Copyright 2013 Olivier Poitrey. All rights servered.
@@ -13,11 +13,11 @@
 #import <Foundation/Foundation.h>
 #import <AVFoundation/AVFoundation.h>
 
-@protocol SDAVAssetExportSessionDelegate;
+@protocol FairchildSDAVAssetExportSessionDelegate;
 
 
 /**
- * An `SDAVAssetExportSession` object transcodes the contents of an AVAsset source object to create an output
+ * An `FairchildSDAVAssetExportSession` object transcodes the contents of an AVAsset source object to create an output
  * of the form described by specified video and audio settings. It implements most of the API of Apple provided
  * `AVAssetExportSession` but with the capability to provide you own video and audio settings instead of the
  * limited set of Apple provided presets.
@@ -33,9 +33,9 @@
  * about the reason for the failure.
  */
 
-@interface SDAVAssetExportSession : NSObject
+@interface FairchildSDAVAssetExportSession : NSObject
 
-@property (nonatomic, weak) id<SDAVAssetExportSessionDelegate> delegate;
+@property (nonatomic, weak) id<FairchildSDAVAssetExportSessionDelegate> delegate;
 
 /**
  * The asset with which the export session was initialized.
@@ -187,8 +187,8 @@
 @end
 
 
-@protocol SDAVAssetExportSessionDelegate <NSObject>
+@protocol FairchildSDAVAssetExportSessionDelegate <NSObject>
 
-- (void)exportSession:(SDAVAssetExportSession *)exportSession renderFrame:(CVPixelBufferRef)pixelBuffer withPresentationTime:(CMTime)presentationTime toBuffer:(CVPixelBufferRef)renderBuffer;
+- (void)exportSession:(FairchildSDAVAssetExportSession *)exportSession renderFrame:(CVPixelBufferRef)pixelBuffer withPresentationTime:(CMTime)presentationTime toBuffer:(CVPixelBufferRef)renderBuffer;
 
 @end

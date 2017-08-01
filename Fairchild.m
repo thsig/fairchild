@@ -9,7 +9,6 @@
 @import Photos;
 
 /* #import <Photos/PHAsset.h> // for testing */
-static long const playbackTimeScale = 10000;
 
 @implementation Fairchild
 
@@ -42,10 +41,10 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
   NSNumber *bitRate                  = [outputOptions objectForKey:@"bitRate"];
   NSNumber *cropSquareVerticalOffset = [outputOptions objectForKey:@"cropSquareVerticalOffset"];
   NSString *orientation              = [outputOptions objectForKey:@"orientation"]; // target orientation of output file
-  Float64 startTimeSeconds           = [[outputOptions objectForKey:@"startTimeSeconds"] doubleValue];
-  Float64 endTimeSeconds             = [[outputOptions objectForKey:@"endTimeSeconds"] doubleValue];
+  float startTimeSeconds             = [[outputOptions objectForKey:@"startTimeSeconds"] floatValue];
+  float endTimeSeconds               = [[outputOptions objectForKey:@"endTimeSeconds"] floatValue];
   
-  if (!outputExtension) { outputExtension = @"mov"; }
+  if (!outputExtension) { outputExtension = @"mov"; }
 
   bool skipCompression = !resolution && !bitRate;
 
@@ -126,16 +125,16 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
   
   //
   // Video composition operations & compression settings
-  //
   
+  //
   AVMutableVideoComposition *videoComposition = [AVMutableVideoComposition videoComposition];
   videoComposition.frameDuration = CMTimeMake(1, 30);
   videoComposition.renderSize = CGSizeMake(outputDimensions.width, outputDimensions.height);
   AVMutableVideoCompositionInstruction *instruction = [AVMutableVideoCompositionInstruction videoCompositionInstruction];
-  Float64 outputDurationSeconds = CMTimeGetSeconds(outputTimeRange.duration);
-  Float64 outputStartSeconds = CMTimeGetSeconds(outputTimeRange.start);
-  instruction.timeRange = CMTimeRangeMake(CMTimeMakeWithSeconds(outputStartSeconds, playbackTimeScale),
-                                          CMTimeMakeWithSeconds(outputDurationSeconds + 1, playbackTimeScale));
+  float outputDurationSeconds = CMTimeGetSeconds(outputTimeRange.duration);
+  float outputStartSeconds = CMTimeGetSeconds(outputTimeRange.start);
+  instruction.timeRange = CMTimeRangeMake(CMTimeMakeWithSeconds(outputStartSeconds, 30),
+                                          CMTimeMakeWithSeconds(outputDurationSeconds + 1, 30));
   AVMutableVideoCompositionLayerInstruction *transformer = [AVMutableVideoCompositionLayerInstruction videoCompositionLayerInstructionWithAssetTrack:videoTrack];
 
   CGAffineTransform finalTransform = [self finalTransform:originalDimensions
@@ -147,7 +146,7 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
   instruction.layerInstructions = [NSArray arrayWithObject:transformer];
   videoComposition.instructions = [NSArray arrayWithObject:instruction];
   
-  SDAVAssetExportSession *encoder = [[SDAVAssetExportSession alloc] initWithAsset:asset];
+  FairchildSDAVAssetExportSession *encoder = [[FairchildSDAVAssetExportSession alloc] initWithAsset:asset];
   encoder.outputFileType = fileType;
   encoder.outputURL = outputFileURL;
   encoder.shouldOptimizeForNetworkUse = YES;
@@ -219,7 +218,6 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
       NSLog(@"original size %@", originalSize);
       NSLog(@"compressed size %@", compressedSize);
       NSLog(@"compressed dimensions: width %i, height %i", compressedWidth, compressedHeight);
-      NSLog(@"outputTimeRange starts at seconds %f, duration %f", outputStartSeconds, outputDurationSeconds);
       NSLog(@"----------------------");
       return callback(@[[NSNull null], @{
          @"outputFileURI":       [outputFileURL path],
@@ -234,23 +232,24 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
     }
     else
     {
-      NSLog(@"Video export failed with error: %@ (%ld)", encoder.error.localizedDescription, (long)encoder.error.code);
+      NSLog(@"Video export failed with error: %@ (%d)", encoder.error.localizedDescription, encoder.error.code);
     }
   }];
 }
 
-- (CMTimeRange)outputTimeRange:(AVAsset *)asset startTimeSeconds:(Float64)startTimeSeconds endTimeSeconds:(Float64)endTimeSeconds
+- (CMTimeRange)outputTimeRange:(AVAsset *)asset startTimeSeconds:(float)startTimeSeconds endTimeSeconds:(float)endTimeSeconds
 {
-  Float64 originalAssetDuration = CMTimeGetSeconds(asset.duration);
+  float originalAssetDuration = CMTimeGetSeconds(asset.duration);
+  CMTimeScale timeScale = asset.duration.timescale;
   
   // Ensure that start time is in [0, originalAssetDuration - 2 milliseconds) and that
   // end time is in [2 milliseconds, originalAssetDuration].
-  Float64 clampedStartTimeSeconds = (startTimeSeconds > originalAssetDuration - 0.02) ? 0 : MIN(MAX(0, startTimeSeconds), originalAssetDuration - 0.002);
-  Float64 clampedEndTimeSeconds = (endTimeSeconds < 0) ? originalAssetDuration : MIN(MAX(0.002, endTimeSeconds), originalAssetDuration);
+  float clampedStartTimeSeconds = (startTimeSeconds > originalAssetDuration - 0.02) ? 0 : MIN(MAX(0, startTimeSeconds), originalAssetDuration - 0.002);
+  float clampedEndTimeSeconds = (endTimeSeconds < 0) ? originalAssetDuration : MIN(MAX(0.002, endTimeSeconds), originalAssetDuration);
   
   // We use millisecond precision
-  CMTime startTime = CMTimeMakeWithSeconds(clampedStartTimeSeconds, playbackTimeScale);
-  CMTime endTime   = CMTimeMakeWithSeconds(clampedEndTimeSeconds, playbackTimeScale);
+  CMTime startTime = CMTimeMake(clampedStartTimeSeconds * 1000, 1000);
+  CMTime endTime   = CMTimeMake(clampedEndTimeSeconds * 1000, 1000);
   
   return CMTimeRangeMake(startTime, CMTimeSubtract(endTime, startTime));
 }
@@ -468,7 +467,7 @@ RCT_EXPORT_METHOD(thumbForVideo:(NSString *)inputFilePath
     CGImageDestinationRef destination = CGImageDestinationCreateWithURL(cfurl, kUTTypePNG, 1, NULL);
     CGImageDestinationAddImage(destination, thumb, nil);
     BOOL writeSuccessful = CGImageDestinationFinalize(destination);
-    Float64 actualTimeSeconds = CMTimeGetSeconds(actualTime);
+    float actualTimeSeconds = CMTimeGetSeconds(actualTime);
     if (error) {
       NSLog(@"Fairchild - Error during thumb extraction: %@", error);
     }
