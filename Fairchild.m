@@ -208,8 +208,8 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
       
       AVAssetTrack *firstCompressedVideoTrack = [[compressedAsset tracksWithMediaType:AVMediaTypeVideo] firstObject];
       CGSize originalDimensions = firstCompressedVideoTrack.naturalSize;
-      int compressedWidth  = originalDimensions.width;
-      int compressedHeight = originalDimensions.height;
+      int compressedWidth  = outputDimensions.width;
+      int compressedHeight = outputDimensions.height;
       
       NSLog(@"----------------------");
       NSLog(@"compression complete");
@@ -221,6 +221,8 @@ RCT_EXPORT_METHOD(compressVideo:(NSString *)inputFilePath
       NSLog(@"----------------------");
       return callback(@[[NSNull null], @{
          @"outputFileURI":       [outputFileURL path],
+         @"outputDimensions":    @{@"height": @(compressedHeight), @"width": @(compressedWidth)},
+         @"outputDuration":      @(outputDurationSeconds),
          @"inputFileSizeBytes":  originalSize,
          @"outputFileSizeBytes": compressedSize,
          @"compressionRatio" :   compressionRatio
